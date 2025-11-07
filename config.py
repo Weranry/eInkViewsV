@@ -11,7 +11,7 @@ DEFAULT_TIMEZONE_OFFSET = 8
 
 #----------------------鉴权系统配置----------------------#
 # 是否启用鉴权
-AUTH_ENABLE = True
+AUTH_ENABLE = False
 # 鉴权白名单（可访问的路径列表，支持字符串前缀匹配）
 AUTH_WHITELIST = [
 	'/public',
