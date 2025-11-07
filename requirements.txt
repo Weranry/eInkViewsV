@@ -1,0 +1,6 @@
+Flask
+Pillow
+requests
+beautifulsoup4
+qrcode
+lunar-python

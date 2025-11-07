@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dive into eInkViews</title>
+    <style>
+        :root {
+            --primary-color: #6e5494;
+            --text-color: #24292e;
+            --text-color-light: #586069;
+            --border-color: #e1e4e8;
+            --code-bg-color: #f6f8fa;
+            --content-width: 420px;
+            --github-black: #24292e;
+            --block-gap: 1.1rem;
+            /* 控制所有块间距 */
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+            color: var(--text-color);
+            background-color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            /* 改变为 flex-start，让内容从顶部开始 */
+            align-items: center;
+            position: relative;
+            z-index: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .container {
+            max-width: var(--content-width);
+            width: 100%;
+            margin: 0 auto;
+            padding: 5rem 1.2rem 0 1.2rem;
+            /* 添加 padding-top: 2rem */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            /* 改变为 flex-start */
+            min-height: 60vh;
+            /* 减少 min-height */
+        }
+
+        .logo-container {
+            margin-bottom: 0.5rem;
+            /* 减少 margin-bottom 从 var(--block-gap) 到 0.5rem */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logo-bg {
+            background: #fff;
+            border-radius: 32px;
+            box-shadow: 0 4px 18px 0 rgba(110, 84, 148, 0.13), 0 1.5px 6px 0 rgba(110, 84, 148, 0.07);
+            padding: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: box-shadow 0.22s cubic-bezier(.4, 0, .2, 1), transform 0.22s cubic-bezier(.4, 0, .2, 1);
+            will-change: box-shadow, transform;
+            position: relative;
+        }
+
+        .logo-bg:hover,
+        .logo-bg:focus {
+            box-shadow:
+                0 8px 28px 0 rgba(110, 84, 148, 0.19),
+                0 3px 12px 0 rgba(110, 84, 148, 0.13),
+                0 0 0 4px rgba(110, 84, 148, 0.08);
+            transform: translateY(-4px) scale(1.035);
+        }
+
+        .logo-bg::after {
+            content: "";
+            pointer-events: none;
+            position: absolute;
+            left: 16px;
+            right: 16px;
+            top: 10px;
+            height: 18px;
+            border-radius: 24px 24px 12px 12px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.09) 100%);
+            opacity: 0.75;
+            filter: blur(1.5px);
+            transition: opacity 0.18s;
+        }
+
+        .logo-bg:hover::after {
+            opacity: 1;
+        }
+
+        .logo {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 0;
+            display: block;
+        }
+
+        .title,
+        .subtitle,
+        .desc {
+            max-width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: var(--block-gap);
+            letter-spacing: 0.02em;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-bottom: var(--block-gap);
+            letter-spacing: 0.01em;
+        }
+
+        .desc {
+            font-size: 0.8rem;
+            color: var(--text-color-light);
+            margin-bottom: var(--block-gap);
+            font-weight: 400;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 0.7rem;
+            margin: 0 0 0.2rem 0;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.55rem 1.3rem;
+            border-radius: 18px;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: all 0.2s;
+            min-width: 110px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .button-github {
+            background-color: var(--github-black);
+            color: #fff;
+            min-width: 70px;
+        }
+
+        .button-github:hover {
+            background-color: #3a3a3a;
+        }
+
+        .button-outline {
+            background: rgba(110, 84, 148, 0.08);
+            color: var(--primary-color);
+            border: 1.5px solid var(--primary-color);
+            backdrop-filter: blur(2px);
+            min-width: 70px;
+        }
+
+        .button-outline:hover {
+            background: rgba(110, 84, 148, 0.18);
+        }
+
+        svg.icon {
+            width: 18px;
+            height: 18px;
+            margin-right: 6px;
+            vertical-align: -3px;
+            fill: currentColor;
+        }
+
+        .footer {
+            width: 100%;
+            text-align: center;
+            color: var(--text-color-light);
+            font-size: 0.85rem;
+            margin-top: 8rem;
+            /* 增加 margin-top 从 5rem 到 15rem */
+            margin-bottom: 1.2rem;
+            letter-spacing: 0.01em;
+            user-select: none;
+        }
+
+        /* 新增：让 footer 内的链接使用配色变量，并保持无下划线，悬停时显示下划线 */
+        .footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .footer a:hover,
+        .footer a:focus {
+            text-decoration: underline;
+        }
+
+        /* 允许按钮、链接、logo区域可交互但不可选中 */
+        .button,
+        .logo-bg,
+        .footer a {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <div class="logo-bg">
+                <svg class="logo" xmlns="http://www.w3.org/2000/svg" width="150" height="150"
+                    viewBox="7 -3 128 161.6217803955078" fill="none">
+                    <path fill="#8A6DB1"
+                        d="M61 86.1962L26.5 106.115C22.5 108.424 17.5 105.537 17.5 100.919L17.5 61.0814C17.5 56.4626 22.5 53.5759 26.5 55.8853L61 75.8038C65 78.1133 65 83.8867 61 86.1962Z" />
+                    <path fill="#8A6DB1"
+                        d="M119 53.1962L84.5 73.1147C80.5 75.4241 75.5 72.5374 75.5 67.9186L75.5 28.0814C75.5 23.4626 80.5 20.5759 84.5 22.8853L119 42.8038C123 45.1132 123 50.8868 119 53.1962Z" />
+                    <path fill="#6E5494"
+                        d="M72.3109 27.8923L72.3109 67.7295C72.3109 72.3483 67.3109 75.235 63.3109 72.9256L28.8109 53.007C24.8109 50.6976 24.8109 44.9241 28.8109 42.6147L63.3109 22.6962C67.3109 20.3867 72.3109 23.2735 72.3109 27.8923Z" />
+                    <path fill="#6E5494"
+                        d="M72.3109 93.8923L72.3109 133.729C72.3109 138.348 67.3109 141.235 63.3109 138.926L28.8109 119.007C24.8109 116.698 24.8109 110.924 28.8109 108.615L63.3109 88.6962C67.3109 86.3867 72.3109 89.2735 72.3109 93.8923Z" />
+                    <circle cx="101" cy="96" r="12" fill="#5A4378" />
+                </svg>
+            </div>
+        </div>
+        <div class="title">Dive into eInkViews</div>
+        <div class="subtitle">Scalable Open ePaperlink Price Tag Info Display</div>
+        <div class="desc">Page visible? eInkViews installed and working on <a href="https://vercel.com/" target="_blank" rel="noopener noreferrer">Vercel</a> !</div>
+        <div class="buttons">
+            <a href="https://github.com/Weranry/eInkViews" class="button button-github" target="_blank"
+                rel="noopener noreferrer">
+                <svg class="icon" viewBox="0 0 16 16" aria-hidden="true">
+                    <path
+                        d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
+                        0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53
+                        .63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95
+                        0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27
+                        1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95
+                        .29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+                </svg>
+                GitHub
+            </a>
+            <a href="https://github.com/Weranry/eInkViews" class="button button-outline" target="_blank"
+                rel="noopener noreferrer">
+                Docs
+            </a>
+        </div>
+    </div>
+    <div class="footer" id="footer">
+        <span>
+            Developed For
+            <a href="https://github.com/OpenePaperLink/OpenePaperLink" target="_blank" rel="noopener noreferrer">Open
+                ePaperLink</a>
+            &middot; MIT License
+            &copy; <span id="copyright-year"></span>
+            &middot; Made by
+            <a href="https://github.com/Weranry" target="_blank" rel="noopener noreferrer">Weranry</a>
+            &middot; Prefer  <a href="https://github.com/Weranry/ePaper_Dashboard" target="_blank"
+                rel="noopener noreferrer">ePaperDashboard</a> ?
+        </span>
+    </div>
+    <script>
+        const yearSpan = document.getElementById('copyright-year');
+        const startYear = 2024;
+        const nowYear = new Date().getFullYear();
+        yearSpan.textContent = startYear === nowYear ? startYear : `${startYear}-${nowYear}`;
+    </script>
+</body>
+
+</html>
