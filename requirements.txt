@@ -4,3 +4,4 @@ requests
 beautifulsoup4
 qrcode
 lunar-python
+pytz
