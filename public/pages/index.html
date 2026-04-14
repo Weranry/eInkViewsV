@@ -27,14 +27,11 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
             color: var(--text-color);
             background-color: #fff;
-            min-height: 100vh;
+            height: 100vh;
+            margin: 0;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
-            /* 改变为 flex-start，让内容从顶部开始 */
-            align-items: center;
-            position: relative;
-            z-index: 0;
+            overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -45,15 +42,13 @@
             max-width: var(--content-width);
             width: 100%;
             margin: 0 auto;
-            padding: 5rem 1.2rem 0 1.2rem;
-            /* 添加 padding-top: 2rem */
+            padding: 0 1.2rem;
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            /* 改变为 flex-start */
-            min-height: 60vh;
-            /* 减少 min-height */
+            justify-content: center;
+            padding-bottom: 10vh; /* 新增偏移：将内容视觉中心上移 */
         }
 
         .logo-container {
@@ -202,9 +197,7 @@
             text-align: center;
             color: var(--text-color-light);
             font-size: 0.85rem;
-            margin-top: 8rem;
-            /* 增加 margin-top 从 5rem 到 15rem */
-            margin-bottom: 1.2rem;
+            padding: 1.2rem 0;
             letter-spacing: 0.01em;
             user-select: none;
         }

@@ -1,7 +1,7 @@
 from .utils import prepare_canvas, finalize_image
 from ...lib.weather_landscape_fetcher import WeatherData
 from ...lib.weather_landscape_view import WeatherDrawer
-#note: 这个模块的函数参数列表较长，且部分参数具有默认值，建议在调用时使用关键字参数以提高代码可读性。
+
 def generate_image(lat: float = 0.0,
                    lon: float = 0.0,
                    key: str = '',

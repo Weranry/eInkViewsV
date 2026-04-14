@@ -86,6 +86,7 @@ def console_listener(app):
             break
 
 def run_test_server():
+    overall_start = time.time()
     try:
         startup_banner()
         EINKVIEWS_START_TIME = datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
@@ -109,7 +110,9 @@ def run_test_server():
             sys.exit(1)
             
         total_elapsed = time.time() - total_start
-        print(f"装载耗时: {total_elapsed:.3f}s")
+        overall_elapsed = time.time() - overall_start + 1
+        print(f"装载耗时: {total_elapsed:.3f}s | 总启动耗时: {overall_elapsed:.3f}s")
+        print("版本: 26.1.10")
         print(f"注意: 仅供本地测试使用。输入 'help' 获取指令。")
         print("访问地址: http://127.0.0.1:5000")
 
