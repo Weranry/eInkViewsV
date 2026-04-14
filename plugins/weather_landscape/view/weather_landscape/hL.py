@@ -49,6 +49,6 @@ def generate_image(lat: float = 0.0,
     drawer.FLOWER_RIGHT_PX = 15
 
     # 使用 prepare_canvas 创建画布
-    img, _ = prepare_canvas('hL', palette_type='bw', cmode=cmode)
+    img, _ = prepare_canvas('hl', palette_type='bw', cmode=cmode)
     img_drawn = drawer.draw_weather(weather_data)
     return finalize_image(img_drawn, rotate=rotate, invert=invert)

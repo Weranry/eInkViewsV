@@ -3,7 +3,7 @@ from modules.generate_views.font_loader import get_font as get_font_global
 from .utils import FONT_PATHS, get_huangli_data
 from PIL import ImageDraw
 
-def generate_image(rotate=0, invert=False, tz=None, cmode=None):
+def generate_image(rotate=0, invert=False, tz=None, cmode=None, **kwargs):
     img, draw = create_canvas('hxl', palette_type='bwr', cmode=cmode)
     jishen, taishen, taisui, pengzubaiji, ershibaxingxiu, chongsha = get_huangli_data(tz=tz)
 

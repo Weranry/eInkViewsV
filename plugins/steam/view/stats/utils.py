@@ -27,7 +27,7 @@ def render_steam_stats(canvas, draw, data):
         lbl_font = get_font(16, font_path)
         list_font = get_font(16, font_path)
         margin = 16
-    else: # m(200x200), vL(122x250)
+    else: # m(200x200), vl(122x250)
         header_font = get_font(16, font_path)
         sub_font = get_font(16, font_path)
         val_font = get_font(32, font_path)
@@ -76,7 +76,7 @@ def render_steam_stats(canvas, draw, data):
     curr_y += 16
     
     # === 3. 数据网格 (Grid布局) ===
-    # 判断要几列：如果是竖屏(v2xl/vL宽度小)，改为两列或垂直堆叠？不，STEAM数据通常三列
+    # 判断要几列：如果是竖屏(v2xl/vl宽度小)，改为两列或垂直堆叠？不，STEAM数据通常三列
     # 如果宽度极小(<150)，可以分两行
     if width < 150:
         cols = 1

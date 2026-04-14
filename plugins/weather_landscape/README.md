@@ -12,7 +12,7 @@
 **支持参数:**
 | 参数名 | 类型 | 默认值 | 说明 |
 | :--- | :--- | :--- | :--- |
-| `size` | string | **必填** | 画布尺寸。支持: `hL`(250x122), `hxl`(384x184), `hp` |
+| `size` | string | **必填** | 画布尺寸。支持: `hl`(250x122), `hxl`(384x184), `hp` |
 | `lat` | float | `0.0` | 纬度坐标 |
 | `lon` | float | `0.0` | 经度坐标 |
 | `key` | string | `''` | OpenWeatherMap API Key (必填) |
@@ -22,7 +22,7 @@
 | `cmode` | string | `None` | 自定义调色板处理模式 |
 
 **使用示例:**
-`http://127.0.0.1:5000/weather_landscape/view/weather_landscape?size=hL&lat=36.7066&lon=119.1268&key=d1012395b4ad93ba5388e78e3f0cfd9f`
+`http://127.0.0.1:5000/weather_landscape/view/weather_landscape?size=hl&lat=36.7066&lon=119.1268&key=your_api_key`
 
 ## 功能特性
 - **动态气压烟雾**: 壁炉烟雾倾角随当地气压实时调整。

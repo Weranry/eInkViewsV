@@ -24,8 +24,10 @@ def register_view_routes(bp, plugin_name, view_dir):
                     raise ParamError('缺少 size 参数')
                 try:
                     mod = importlib.import_module(f'plugins.{plugin_name}.view.{kind}.{size}')
-                except ModuleNotFoundError:
-                    raise ParamError(f'视图 {plugin_name}.view.{kind}.{size} 不存在')
+                except ModuleNotFoundError as e:
+                    import traceback
+                    traceback.print_exc()
+                    raise ParamError(f'视图 {plugin_name}.view.{kind}.{size} 不存在: {str(e)}')
                 if not hasattr(mod, 'generate_image'):
                     raise ParamError(f'视图 {plugin_name}.view.{kind}.{size} 未实现 generate_image')
                 req_args = {k: (v[0] if isinstance(v, list) and len(v) > 0 else v) for k, v in dict(request.args).items()}

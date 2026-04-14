@@ -23,7 +23,7 @@ def wrap_text(text, font, max_width, max_lines=2):
             lines.append(current_line)
     return lines
 
-def generate_image(rotate=0, invert=False, tz=None, cmode=None):
+def generate_image(rotate=0, invert=False, tz=None, cmode=None, **kwargs):
     img, draw = create_canvas('hxl', palette_type='bwr', cmode=cmode)
     font_large = get_font_global(14, font_path=FONT_PATHS['default'])
     font_small = get_font_global(12, font_path=FONT_PATHS['default'])  # 最小12

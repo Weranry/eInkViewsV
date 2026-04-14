@@ -2,7 +2,7 @@ from modules.generate_views.canvas_factory import create_canvas, finalize_image_
 from modules.generate_views.font_loader import get_font as get_font_global
 from .utils import FONT_PATHS, get_calendar_data
 
-def generate_image(rotate=0, invert=False, tz=None, cmode=None):
+def generate_image(rotate=0, invert=False, tz=None, cmode=None, **kwargs):
     img, draw = create_canvas('h2xl', palette_type='bwr', cmode=cmode)
     # 字体全部为16或其整数倍
     title_font = get_font_global(32, font_path=FONT_PATHS['default'])      # 标题用32
