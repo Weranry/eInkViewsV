@@ -7,291 +7,167 @@ eInkViews 基于 [ePapaer DashBoard](https://github.com/weranry/epaperdashboard)
 
 ## 快速开始
 ---
-### 拉取代码
+### 拉取仓库
 ```bash
 git clone https://github.com/Weranry/eInkViews.git
-cd eInkViews
 ```
 ### 安装依赖
 ```bash
 pip install -r requirements.txt
 ```
-### 启动服务
+### 安装插件
+- 将第三方插件或自定义插件目录复制到 `plugins/` 文件夹下。
+- 可调整插件自身目录下的 `plugin_config.py`，实现个性化设置。
+### 其他配置
+- 全局配置文件为 `config.py`，可进行全局配置
+- 参数优先级：用户请求 > 插件 `plugin_config.py` > 全局 `config.py`
+### 本地启动与调试
 ```bash
-python app.py
+python test.py
 ```
+- 启动后访问本地服务进行调试，检查插件是否正常工作
+### 推送到远程仓库
+```bash
+git add .
+git commit -m 
+git push origin main
+```
+### 部署到 Vercel
+1. 注册并登录 [Vercel](https://vercel.com)。
+2. Fork 或上传本项目到你的 GitHub 仓库。
+3. 在 Vercel 新建项目，选择你的仓库。
+4. 保持默认设置，自动检测 `vercel.json` 配置，无需额外修改。
+5. 部署完成后即可通过 Vercel 提供的域名访问服务。
+6. 在 Vercel 项目设置中添加环境变量 EVKEY ，用于插件或服务鉴权。
 
-## 项目结构
----
-```
-/eInkViews/
-├── app.py # 项目主程序入口
-├── config.py # 项目配置文件
-├── requirements.txt # 项目依赖
-├── vercel.json # Vercel部署配置
-├── public/ # 静态资源公共目录
-│ ├── pages # 项目前端页面
-│ └── favicon.ico # 项目图标
-├── modules/ # 核心功能模块目录
-│ ├── errors/ # 错误处理
-│ ├── generate_views/ # 视图生成
-│ ├── plugins/ # 插件管理
-│ ├── register/ # 路由注册
-│ └── templates/ # 模板路由
-└── plugins/ # 插件目录
-├── plugins_A # 插件A
-├── plugins_B # 插件B
-└── ... # 更多插件
-```
+后续如需要添加插件，可继续在`plugins/`添加并配置，重新推送到 Github 仓库后 Vercel 会自动识别并部署。
 
 ## 路由与参数
 ---
-### Views 视图接口
+### 公共参数
+#### 视图尺寸 Size 参数
+通过设置此参数，可以调整获取到的视图大小和方向，视图适配情况视插件具体情况而定，详细可见插件文档，eInkViews预设了下列尺寸。
+
+|参数|尺寸|方向|对应尺寸｜
+|---|---|---|---|
+|m|200x200|无|1.54inch|
+|hL|250x122|横向|2.13inch|
+|hxl|384x184|横向|3.50inch|
+|h2xl|400x300|横向|4.20inch|
+|h3xl|600x480|横向|5.83inch|
+|h4xl|800x480|横向|7.5inch|
+|vL|122x250|纵向|2.13inch|
+|vxl|184x384|纵向|3.50inch|
+|v2xl|300x400|纵向|4.20inch|
+|v3xl|480x600|纵向|5.83inch|
+|v4xl|480x800|纵向|7.5inch|
+
+插件开发者可以通过预设的`create_custom_canvas`方法创建预设尺寸之外的大小，详细参数值可见插件文档。
+
+#### 旋转 rotate 参数
+对于返回图像，可做旋转处理，由于Open ePaperlink 的限制，当请求纵向视图时，会出现错误，所以需要对返回的图像做旋转处理。
+
+|参数|说明|
+|---|---|
+|c|顺时针90°|
+|cc|逆时针90°|
+|h|旋转180°|
+|0|默认（不旋转）|
+
+#### 反色 invert 参数
+如果对返回的图像有反转颜色的需求，可以设置此参数，但是此参数只会对黑白进行反色，而不会处理红色或者黄色，对于七色视图不起作用。
+
+|参数|说明|
+|---|---|
+|t|反色|
+|f|不反色|
+
+#### 颜色模式 cmode 参数
+由于墨水屏硬件的限制，可能无法使用某些插件视图的调色盘方案，需要使用此参数对图像进行对应处理，相同地，不对七色视图起作用。
+
+|参数|说明|
+|---|---|
+|None|原始调色盘方案|
+|2bw|将任何彩色转换为黑色|
+|r2y|将红色转换为黄色|
+|y2r|将黄色转换为红色|
+|yr2r|将红色黄色统一为红色|
+|yr2y|将红色黄色统一为黄色|
+
+
+### 接口
+#### Views 视图接口
+eInkViews 的基础功能。
 ```
 GET /{plugin_name}/view/{view_name}?size={size}&rotate={r}&invert={i}&param=value...
 ```
 - **plugin_name**：插件名称
 - **view_name**：插件下的视图名称
+- **params**：由具体模块定义
 
-#### 尺寸 size 参数
-
-|标识|尺寸|方向|
-|---|---|---|
-|m|200x200|无|
-|hL|250x122|横向|
-|hxl|384x184|横向|
-|h2xl|400x300|横向|
-|h3xl|600x480|横向|
-|h4xl|800x480|横向|
-|vL|122x250|纵向|
-|vxl|184x384|纵向|
-|v2xl|300x400|纵向|
-|v3xl|480x600|纵向|
-|v4xl|480x800|纵向|
-
-#### 旋转 rotate 参数
-
-- `rotate`：旋转角度，支持 `c`(顺时针90°)、`cc`(逆时针90°)、`h`(180°)、`0`(默认)
-
-#### 反色 invert 参数
-- `invert`：反色，`t`(是)、`f`(否)
-
-#### 颜色 cmode 参数
-- 
-  
-
-### 2. JSON 数据接口
+### JSON 数据接口
+可以返回 Views 使用的数据，可另作他用。
 ```
 GET /{plugin_name}/json/{json_name}?param=value
 ```
-
 - **plugin_name**：插件名称
 - **json_name**：插件中的 JSON 格式名称
 - **params**：由具体模块定义
 
-  
-
-#### 相关配置（config.py）
-- `MODULE_IMPORT_CACHE_SIZE`：JSON模块导入缓存数量，默认 256
-
-
-### 3. 页面接口
+### 页面接口
+可用于提供插件的工具和文档。
 ```
 GET /{plugin_name}/page/{page_name}
 ```
 - **plugin_name**：插件名称
 - **page_name**：插件中 pages/ 目录下的页面名称
+- **params**：由具体模块定义
 
-页面可以是静态HTML，可用于提供插件的工具和文档。
-
-  
-
-### 4. Random Views 视图接口
+### Random Views 视图接口
+可以设置多个视图的权重，实现随机展示，建议使用一致的SIZE参数。
 ```
 GET /random/views?routes={路由描述串}&rotate={r}&invert={i}
-
 ```
-
 - **路由描述串**：格式为 `plugin_name.view_name[:size][:weight][:param=value,...]`，多个用逗号分隔
-
 - **参数**：全局旋转或反色参数，单项参数优先
 
-  
-
-#### 相关配置（config.py）
-
-- `RANDOM_VIEW_CACHE_MAX_AGE`：随机视图接口图片的 HTTP 缓存时间（秒），默认 60
-- `MODULE_IMPORT_CACHE_SIZE`：随机视图模块导入缓存数量，默认 256
+## 插件开发
 ---
-
-  
-
-## 插件开发指南
-
-  
-
-### 1. 插件目录结构与最小实现
-
-  
-
-每个插件为独立目录，**最小可用插件**只需包含：
-
-  
-
+### 插件文件结构
+插件需要满足如下结构
 ```
-
-plugins/your_plugin/
-
-├── routes.py
-
-└── view/
-
-└── example/
-
-└── hm.py
-
+your_plugin/
+├── assets/           # 插件使用的素材文件，如字体等
+├── lib/              # 插件使用的业务逻辑代码
+├── json_module/      # 插件以 JSON 形式返回内容的模块
+├── page/             # 存储有必要的前端 HTML
+├── plugin_config.py  # 插件的个性化设置
+├── routes.py         # 插件的路由注册模块
+└── views/            # 视图文件
+  └── kind/           # 视图种类，一个插件可能存在多种视图
+    └── size.py       # 具体的视图模块，绘图逻辑，如果某种类视图数量多，则应将可复用的代码封装进 utils.py 中
 ```
+如果需要开发插件，可以复制template插件作为模板进行修改，插件的最小可用状态应该至少包含一个业务逻辑代码和视图模块。
 
-  
-
-- `routes.py`：注册插件视图路由（必须）。
-
-- `view/`：视图目录，至少有一个类别（如 `example/`），类别下至少有一个尺寸（如 `hm.py`），并实现 `generate_image`。
-
-  
-
-**无需实现所有尺寸，未实现的接口自动返回错误提示。**
-
-  
-
-### 2. routes.py 模板
-
-  
-
-每个插件必须有 `routes.py`，内容如下（仅需改蓝图名和 PLUGIN_NAME）：
-
-  
-
+### routes.py
+每个插件必须包含一个 `routes.py` 需要设置 `your_plugin_name`和 `your_plugin_description`（可选）
 ```python
-
 from flask import Blueprint
-
 import os
-
 from modules.register.auto_view_routes import register_view_routes
-
-  
-
-bp = Blueprint('your_plugin_name', __name__)
-
-PLUGIN_NAME = 'your_plugin_name'
-
-PLUGIN_DESCRIPTION = '插件描述，可选'
-
-  
-
-VIEW_DIR = os.path.join(os.path.dirname(__file__), 'view')
-
-register_view_routes(bp, PLUGIN_NAME, VIEW_DIR)
-
-```
-
-  
-
-如需 JSON 或页面接口，可参考现有插件添加注册：
-
-  
-
-```python
-
 from modules.register.auto_json_routes import register_json_routes
-
 from modules.register.auto_page_routes import register_page_routes
 
-  
+bp = Blueprint('your_plugin_name', __name__)
+PLUGIN_NAME = 'your_plugin_name'
+PLUGIN_DESCRIPTION = 'your_plugin_description'
 
+VIEW_DIR = os.path.join(os.path.dirname(__file__), 'view')
 JSON_MODULE_DIR = os.path.join(os.path.dirname(__file__), 'json_module')
-
 PAGE_DIR = os.path.join(os.path.dirname(__file__), 'pages')
 
+register_view_routes(bp, PLUGIN_NAME, VIEW_DIR)
 register_json_routes(bp, PLUGIN_NAME, JSON_MODULE_DIR)
-
 register_page_routes(bp, PLUGIN_NAME, PAGE_DIR)
-
 ```
-
-  
-
-### 3. 视图模块实现
-
-  
-
-每个视图（如 `view/example/hm.py`）需实现 `generate_image`：
-
-  
-
-```python
-
-from .utils import prepare_canvas, finalize_image, get_font
-
-  
-
-def generate_image(rotate=0, invert=False, param1='默认值1'):
-
-img, draw, font = prepare_canvas('hm', font_size=24)
-
-# ...绘制内容...
-
-return finalize_image(img, rotate=rotate, invert=invert)
-
-```
-
-  
-
-- `rotate`/`invert` 必须保留，其他参数可自定义。
-
-- 推荐直接复用 `view/example/utils.py` 工具函数。
-
-  
-
-### 4. 参数优先级与自动注册
-
-  
-
-- **参数优先级**：用户请求 > 插件 `plugin_config.py` > 全局 `config.py`
-
-- 插件目录、`PLUGIN_NAME`、蓝图名建议保持一致。
-
-- 路由自动注册，无需手动添加。
-
-  
-
-### 5. 推荐开发流程
-
-  
-
-1. 参考 `plugins/template/` 或任意现有插件结构，按需新建目录和文件。
-
-2. 只需关注业务逻辑和视图内容，框架和注册流程无需重复实现。
-
-3. 可只实现需要的接口和尺寸，逐步完善。
-
-  
-
-### 6. 工具函数与资源
-
-  
-
-- 推荐直接复制 `view/example/utils.py`，用于标准化画布、字体、图片处理。
-
-- 字体、图片等资源建议放在 `assets/` 目录下，仅在代码中相对路径读取。
-
-  
-
-### 7. JSON 与页面接口（可选）
-
-  
-
-- `json_module/` 下添加 py 文件，实现 `to_json` 函数即可。
-
-- `pages/` 下添加 html 文件，自动注册 `/your_plugin/page/页面名` 路由。
+对于注册视图，JSON和PAGE的代码，如果插件没有对应功能，则可将其进行注释，但是尽量不要删除，以保证后期的可扩展性。

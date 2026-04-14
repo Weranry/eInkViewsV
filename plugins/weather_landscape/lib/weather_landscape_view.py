@@ -378,7 +378,10 @@ class WeatherDrawer:
             tline[i] = old_y
 
         y_clouds = int(self.ypos - self.YSTEP / 2)
-        sprite.Draw("house", 0, xpos, old_y)
+        house_width = sprite.Draw("house", 0, xpos, old_y)
+        
+        t_now = datetime.datetime.now()
+        sprite.DrawClock(xpos + house_width, old_y - 10, t_now.hour, t_now.minute)
 
         curr_hpa = f['pressure']
         smoke_angle_deg = ((curr_hpa - weather_data.pressure_min) / (weather_data.pressure_max - weather_data.pressure_min)) * 85 + 5

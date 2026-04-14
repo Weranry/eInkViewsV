@@ -20,7 +20,10 @@ def now_in_timezone(param_offset=None):
     offset = get_timezone_offset(param_offset)
     if offset is None:
         return datetime.datetime.now()  # 本机时间
-    utc_now = datetime.datetime.utcnow()
+    
+    # 修复 DeprecationWarning: datetime.datetime.utcnow() is deprecated
+    # 使用带时区的 UTC 时间获取
+    utc_now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
     local_now = utc_now + datetime.timedelta(hours=offset)
     return local_now
 

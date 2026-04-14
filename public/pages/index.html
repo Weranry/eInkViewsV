@@ -223,11 +223,24 @@
         /* 允许按钮、链接、logo区域可交互但不可选中 */
         .button,
         .logo-bg,
-        .footer a {
+        .footer a,
+        .desc a {
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
+        }
+
+        .desc a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .desc a:hover {
+            text-decoration: underline;
+            color: #5a4378;
         }
     </style>
 </head>

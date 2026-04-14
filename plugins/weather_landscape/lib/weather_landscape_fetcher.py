@@ -63,8 +63,9 @@ class WeatherData:
                     if self._check_weather_data(forecast):
                         self.weather_data.append(self._process_weather_info(forecast))
         except requests.exceptions.RequestException as e:
-            print(f"Error fetching weather data: {e}")
-            return []
+            from modules.errors.errors import ParamError
+            raise ParamError(f"fetch failed: {e}")
+        
         return self.weather_data
 
     def _process_weather_info(self, data):

@@ -3,13 +3,13 @@ from PIL import ImageFont
 
 # 获取项目根目录下的字体路径
 def get_root_font_path(filename):
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
-    return os.path.join(project_root, 'assets', 'font', filename)
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+    return os.path.join(project_root, 'assets', 'fonts', filename)
 
 # 获取插件目录下的字体路径
 def get_plugin_font_path(filename, base_file=__file__):
     plugin_root = os.path.abspath(os.path.join(os.path.dirname(base_file), '../../..'))
-    return os.path.join(plugin_root, 'assets', 'font', filename)
+    return os.path.join(plugin_root, 'assets', 'fonts', filename)
 
 def _load_font(size, font_path):
     abs_path = os.path.abspath(font_path)

@@ -28,10 +28,11 @@ def register_view_routes(bp, plugin_name, view_dir):
                     raise ParamError(f'视图 {plugin_name}.view.{kind}.{size} 不存在')
                 if not hasattr(mod, 'generate_image'):
                     raise ParamError(f'视图 {plugin_name}.view.{kind}.{size} 未实现 generate_image')
-                req_args = dict(request.args)
+                req_args = {k: (v[0] if isinstance(v, list) and len(v) > 0 else v) for k, v in dict(request.args).items()}
                 merged_args = dict(plugin_default_args)
-                cmode = req_args.get('cmode', plugin_default_args.get('cmode', None))
-                rotate_arg = req_args.get('rotate')
+                merged_args.update(req_args)
+                cmode = merged_args.get('cmode', None)
+                rotate_arg = merged_args.get('rotate')
                 if rotate_arg is not None:
                     rotate_map = {'c': 270, 'cc': 90, 'h': 180}
                     rotate = rotate_map.get(rotate_arg, 0)
@@ -51,8 +52,12 @@ def register_view_routes(bp, plugin_name, view_dir):
                 else:
                     invert = DEFAULT_INVERT
                 try:
+                    # 优先使用合并后的参数
                     img = mod.generate_image(rotate=rotate, invert=invert, cmode=cmode, **merged_args)
                 except Exception as e:
+                    # 打印详细错误方便调试
+                    import traceback
+                    traceback.print_exc()
                     raise ParamError(f'图片生成失败: {str(e)}')
                 buf = io.BytesIO()
                 img.save(buf, format='JPEG', quality=DEFAULT_IMAGE_QUALITY, subsampling=0, progressive=False)
