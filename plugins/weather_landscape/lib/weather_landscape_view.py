@@ -4,6 +4,7 @@ import math
 import datetime
 from PIL import Image, ImageOps
 from .weather_landscape_fetcher import WeatherData, SunCalculator
+from modules.common_timezone import now_in_timezone
 
 class Sprites:
     """处理精灵图片绘制"""
@@ -357,7 +358,7 @@ class WeatherDrawer:
         self.ypos = self.DRAWOFFSET
 
         n_forecast = ((self.pic_width - self.XSTART) / self.XSTEP)
-        max_time = datetime.datetime.now() + datetime.timedelta(hours=WeatherData.FORECAST_PERIOD_HOURS * n_forecast)
+        max_time = now_in_timezone(weather_data.tz) + datetime.timedelta(hours=WeatherData.FORECAST_PERIOD_HOURS * n_forecast)
 
         (self.tmin, self.tmax) = weather_data.get_temp_range(max_time)
         self.temp_range = self.tmax - self.tmin
@@ -380,7 +381,7 @@ class WeatherDrawer:
         y_clouds = int(self.ypos - self.YSTEP / 2)
         house_width = sprite.Draw("house", 0, xpos, old_y)
         
-        t_now = datetime.datetime.now()
+        t_now = now_in_timezone(weather_data.tz)
         sprite.DrawClock(xpos + house_width, old_y - 10, t_now.hour, t_now.minute)
 
         curr_hpa = f['pressure']
@@ -397,7 +398,7 @@ class WeatherDrawer:
         sprite.DrawRain(f['rain'], xpos, y_clouds, self.XSTART, tline)
         sprite.DrawSnow(f['snow'], xpos, y_clouds, self.XSTART, tline)
 
-        t = datetime.datetime.now()
+        t = now_in_timezone(weather_data.tz)
         dt = datetime.timedelta(hours=WeatherData.FORECAST_PERIOD_HOURS)
         tf = t
 
@@ -432,7 +433,7 @@ class WeatherDrawer:
         tline0 = tline.copy()
         self.block_range(tline, 0, x0)
 
-        sun_calc = SunCalculator(weather_data.lat, weather_data.lon)
+        sun_calc = SunCalculator(weather_data.lat, weather_data.lon, tz=weather_data.tz)
         tf = t
         xpos = self.XSTART
         obj_counter = 0

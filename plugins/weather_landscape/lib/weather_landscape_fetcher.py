@@ -3,16 +3,7 @@ import datetime
 import requests
 from math import cos, sin, acos, asin, tan
 from math import degrees as deg, radians as rad
-import pytz
-
-# Define GMT+8 timezone (or any default)
-DEFAULT_TIMEZONE_STR = 'Asia/Shanghai'
-try:
-    DEFAULT_TIMEZONE = pytz.timezone(DEFAULT_TIMEZONE_STR)
-except pytz.UnknownTimeZoneError:
-    print(f"Default timezone '{DEFAULT_TIMEZONE_STR}' unknown, falling back to UTC.")
-    DEFAULT_TIMEZONE = pytz.utc
-    DEFAULT_TIMEZONE_STR = 'UTC'
+from modules.common_timezone import convert_utc_to_local, now_in_timezone
 
 class WeatherData:
     """整合获取天气数据的功能"""
@@ -28,7 +19,7 @@ class WeatherData:
     FORECAST_PERIOD_HOURS = 3
     OWMURL = "http://api.openweathermap.org/data/2.5/"
 
-    def __init__(self, api_key, lat, lon, units_mode=0, pressure_min=980, pressure_max=1030, timezone_str=DEFAULT_TIMEZONE_STR):
+    def __init__(self, api_key, lat, lon, units_mode=0, pressure_min=980, pressure_max=1030, tz=None):
         self.api_key = api_key
         self.lat = lat
         self.lon = lon
@@ -36,13 +27,7 @@ class WeatherData:
         self.pressure_min = pressure_min
         self.pressure_max = pressure_max
         self.weather_data = []
-        try:
-            self.timezone = pytz.timezone(timezone_str)
-            self.timezone_str = timezone_str
-        except pytz.UnknownTimeZoneError:
-            print(f"Unknown timezone '{timezone_str}', defaulting to {DEFAULT_TIMEZONE_STR}.")
-            self.timezone = DEFAULT_TIMEZONE
-            self.timezone_str = DEFAULT_TIMEZONE_STR
+        self.tz = tz
         self.reqstr = f"lat={self.lat}&lon={self.lon}&mode=json&APPID={self.api_key}"
         self.url_forecast = f"{self.OWMURL}forecast?{self.reqstr}"
         self.url_current = f"{self.OWMURL}weather?{self.reqstr}"
@@ -71,9 +56,8 @@ class WeatherData:
     def _process_weather_info(self, data):
         """处理从API获取的天气数据，存储为naive datetime"""
         is_celsius = self.units_mode != self.TEMP_UNITS_FAHRENHEIT
-        utc_dt = datetime.datetime.fromtimestamp(int(data['dt']), tz=pytz.utc)
-        local_dt_aware = utc_dt.astimezone(self.timezone)
-        local_dt_naive = local_dt_aware.replace(tzinfo=None)
+        utc_dt = datetime.datetime.fromtimestamp(int(data['dt']), tz=datetime.timezone.utc)
+        local_dt_naive = convert_utc_to_local(utc_dt, self.tz).replace(tzinfo=None)
 
         weather_info = {
             'time': local_dt_naive,
@@ -112,7 +96,7 @@ class WeatherData:
     def _get_naive_datetime_in_timezone(self, dt_input):
         """Converts aware or naive datetime to naive datetime in instance's timezone."""
         if dt_input.tzinfo is not None:
-            return dt_input.astimezone(self.timezone).replace(tzinfo=None)
+            return convert_utc_to_local(dt_input, self.tz).replace(tzinfo=None)
         else:
             return dt_input
 
@@ -155,21 +139,17 @@ class WeatherData:
 class SunCalculator:
     """计算日出日落时间 (返回 naive 时间)"""
 
-    def __init__(self, lat, lon, timezone_str=DEFAULT_TIMEZONE_STR):
+    def __init__(self, lat, lon, tz=None):
         self.lat = lat
         self.lon = lon
-        try:
-            self.timezone = pytz.timezone(timezone_str)
-        except pytz.UnknownTimeZoneError:
-            print(f"Unknown timezone '{timezone_str}', defaulting to {DEFAULT_TIMEZONE_STR}.")
-            self.timezone = DEFAULT_TIMEZONE
+        self.tz = tz
 
     def _get_naive_datetime_in_timezone(self, dt_input=None):
         """Gets current or specified time as naive datetime in instance's timezone."""
         if dt_input is None:
-            return datetime.datetime.now(self.timezone).replace(tzinfo=None)
-        elif dt_input.tzinfo is not None:
-            return dt_input.astimezone(self.timezone).replace(tzinfo=None)
+            return now_in_timezone(self.tz).replace(tzinfo=None)
+        elif hasattr(dt_input, 'tzinfo') and dt_input.tzinfo is not None:
+            return convert_utc_to_local(dt_input, self.tz).replace(tzinfo=None)
         else:
             return dt_input
 
@@ -225,17 +205,10 @@ class SunCalculator:
              raise ValueError(f"Could not construct valid naive datetime. adjusted_date={adjusted_date}, h={h}, m={m}, s={s}. Original error: {e}") from e
 
     def __preptime(self, naive_when):
-        try:
-            aware_when = self.timezone.localize(naive_when)
-        except pytz.exceptions.NonExistentTimeError:
-             aware_when = self.timezone.localize(naive_when + datetime.timedelta(hours=1), is_dst=None)
-        except pytz.exceptions.AmbiguousTimeError:
-             aware_when = self.timezone.localize(naive_when, is_dst=False)
+        from modules.common_timezone import get_timezone_offset
+        self.timezone_offset_hours = get_timezone_offset(self.tz) or 0.0
 
-        tz_offset_seconds = aware_when.utcoffset().total_seconds()
-        self.timezone_offset_hours = tz_offset_seconds / 3600.0
-
-        when_utc = aware_when.astimezone(pytz.utc)
+        when_utc = naive_when - datetime.timedelta(hours=self.timezone_offset_hours)
 
         self.day = when_utc.toordinal() - (734124 - 40529)
         t = when_utc.time()

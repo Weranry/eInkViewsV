@@ -11,6 +11,7 @@ def generate_image(
     pressure_max: float = 1030.0,
     rotate: int = 0,
     invert: bool = False,
+    tz=None,
     cmode=None,
     **kwargs
 ):
@@ -34,7 +35,7 @@ def generate_image(
         pressure_max = 1030.0
 
     weather_data = WeatherData(key, lat, lon, units_mode=units,
-                               pressure_min=pressure_min, pressure_max=pressure_max)
+                               pressure_min=pressure_min, pressure_max=pressure_max, tz=tz)
     weather_data.get_weather_data()
 
     drawer = WeatherDrawer()
