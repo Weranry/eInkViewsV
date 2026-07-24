@@ -1,43 +1,60 @@
-from modules.generate_views.font_loader import get_font, get_root_font_path
-import math
+from PIL import ImageFont
+import importlib
 
-WMO_MAP = {
-    0: ('晴', ''),
-    1: ('少云', ''),
-    2: ('多云', ''),
-    3: ('阴', ''),
-    45: ('雾', ''),
-    48: ('浓雾', ''),
-    51: ('毛毛雨/细雨', ''),
-    53: ('毛毛雨/细雨', ''),
-    55: ('毛毛雨/细雨', ''),
-    56: ('冻雨', ''),
-    57: ('冻雨', ''),
-    61: ('小雨', ''),
-    63: ('中雨', ''),
-    65: ('大雨', ''),
-    66: ('冻雨', ''),
-    67: ('冻雨', ''),
-    71: ('小雪', ''),
-    73: ('中雪', ''),
-    75: ('大雪', ''),
-    77: ('雪', ''),
-    80: ('阵雨', ''),
-    81: ('强阵雨', ''),
-    82: ('强阵雨', ''),
-    85: ('阵雪', ''),
-    86: ('阵雪', ''),
-    95: ('雷阵雨', ''),
-    96: ('雷阵雨伴有冰雹', ''),
-    99: ('雷阵雨伴有冰雹', '')
-}
+font_loader = importlib.import_module("modules.generate_views.font_loader")
+get_root_font_path = font_loader.get_root_font_path
+get_font = font_loader.get_font
 
-def get_weather_info(code):
-    return WMO_MAP.get(code, ('未知', ''))
+from ...lib.weather_icons import get_weather_icon
 
-def get_wind_dir(deg):
-    if deg is None:
-        return ""
-    dirs = ['北风', '东北风', '东风', '东南风', '南风', '西南风', '西风', '西北风']
-    idx = round(deg / 45) % 8
-    return dirs[idx]
+
+def wind_direction_text(degrees):
+    if degrees is None:
+        return "N/A"
+    directions = [
+        "北", "东北偏北", "东北", "东北偏东",
+        "东", "东南偏东", "东南", "东南偏南",
+        "南", "西南偏南", "西南", "西南偏西",
+        "西", "西北偏西", "西北", "西北偏北",
+    ]
+    idx = int((degrees + 11.25) / 22.5) % 16
+    return directions[idx]
+
+
+def load_font(size):
+    try:
+        return get_font(size, get_root_font_path("font.ttf"))
+    except Exception:
+        return ImageFont.load_default()
+
+
+def load_icon_font(size):
+    try:
+        return get_font(size, get_root_font_path("weather-icon.ttf"))
+    except Exception:
+        return ImageFont.load_default()
+
+
+def text_size(draw, text, font):
+    bbox = draw.textbbox((0, 0), str(text), font=font)
+    return bbox[2] - bbox[0], bbox[3] - bbox[1]
+
+
+def draw_safe_text(draw, xy, text, fill, font, img_width, img_height):
+    x, y = xy
+    text = str(text)
+    tw, th = text_size(draw, text, font)
+    if x + tw > img_width:
+        x = max(0, img_width - tw - 2)
+    if y + th > img_height:
+        y = max(0, img_height - th - 2)
+    if x < 0:
+        x = 0
+    if y < 0:
+        y = 0
+    draw.text((x, y), text, fill=fill, font=font)
+    return tw, th
+
+
+def draw_separator(draw, y, img_width):
+    draw.line([(16, y), (img_width - 16, y)], fill=1, width=1)

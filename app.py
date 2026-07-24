@@ -20,6 +20,7 @@ app.register_blueprint(bp_random)
 app.register_blueprint(bp_templates)
 app.before_request(check_auth)
 
+
 @app.after_request
 def set_charset(response):
     if response.mimetype == 'application/json':

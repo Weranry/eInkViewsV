@@ -2,10 +2,10 @@ from flask import Blueprint
 import os
 from modules.register.auto_view_routes import register_view_routes
 
-bp = Blueprint('openmeteo', __name__)
-PLUGIN_NAME = 'openmeteo'
-PLUGIN_DESCRIPTION = 'OpenMeteo Air Quality Plugin'
+PLUGIN_NAME = "openmeteo"
+PLUGIN_DESCRIPTION = "Open-Meteo 天气插件，支持当前天气和预报"
 
-VIEW_DIR = os.path.join(os.path.dirname(__file__), 'view')
+bp = Blueprint(PLUGIN_NAME, __name__)
+plugin_dir = os.path.dirname(os.path.abspath(__file__))
 
-register_view_routes(bp, PLUGIN_NAME, VIEW_DIR)
+register_view_routes(bp, PLUGIN_NAME, os.path.join(plugin_dir, "view"))
