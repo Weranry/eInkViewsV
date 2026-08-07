@@ -38,26 +38,5 @@ def draw_safe_text(draw, xy, text, fill, font, img_width, img_height):
     return tw, th
 
 
-def draw_centered_text(draw, cx, y, text, fill, font, img_width, img_height):
-    text = str(text)
-    tw, th = text_size(draw, text, font)
-    x = cx - tw // 2
-    draw_safe_text(draw, (x, y), text, fill=fill, font=font, img_width=img_width, img_height=img_height)
-    return tw, th
-
-
-def draw_h_line(draw, y, x1, x2, fill=1, width=1):
-    draw.line([(x1, y), (x2, y)], fill=fill, width=width)
-
-
-def truncate_text(draw, text, font, max_width):
-    if not text:
-        return ""
-    result = ""
-    for ch in text:
-        test = result + ch
-        tw, _ = text_size(draw, test, font)
-        if tw > max_width:
-            return result
-        result = test
-    return result
+def draw_separator(draw, y, img_width):
+    draw.line([(16, y), (img_width - 16, y)], fill=1, width=1)

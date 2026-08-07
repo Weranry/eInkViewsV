@@ -1,13 +1,17 @@
 import requests
 from datetime import datetime
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+from modules.common_timezone import now_in_timezone
 
 
 WIKI_URL = "https://zh.wikipedia.org/api/rest_v1/feed/onthisday/events/{month}/{day}"
 WIKI_EN_URL = "https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/{month}/{day}"
 
 
-def fetch_history_today():
-    today = datetime.now()
+def fetch_history_today(tz=None):
+    today = now_in_timezone(tz)
     month = today.month
     day = today.day
 

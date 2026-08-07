@@ -13,7 +13,8 @@ from .utils import load_font, text_size, draw_safe_text, draw_separator
 
 
 def generate_image(rotate=0, invert=False, cmode=None, **kwargs):
-    data = get_today_data()
+    tz = kwargs.get("tz")
+    data = get_today_data(tz=tz)
 
     img, draw = create_canvas("h2xl", palette_type="bwr", cmode=cmode)
     W = img.width

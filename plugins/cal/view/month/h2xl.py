@@ -3,12 +3,12 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 
 import importlib
-from datetime import datetime
 
 canvas_factory = importlib.import_module("modules.generate_views.canvas_factory")
 create_canvas = canvas_factory.create_canvas
 finalize_image_common = canvas_factory.finalize_image_common
 
+from modules.common_timezone import now_in_timezone
 from ...lib.cal_data import get_month_data
 from .utils import (
     load_font, text_size, draw_safe_text, draw_centered_text, WEEKDAY_NAMES
@@ -16,8 +16,9 @@ from .utils import (
 
 
 def generate_image(rotate=0, invert=False, cmode=None, **kwargs):
-    today = datetime.now()
-    data = get_month_data(today.year, today.month)
+    tz = kwargs.get("tz")
+    today = now_in_timezone(tz)
+    data = get_month_data(today.year, today.month, tz=tz)
 
     img, draw = create_canvas("h2xl", palette_type="bwr", cmode=cmode)
     W = img.width

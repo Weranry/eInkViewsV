@@ -25,11 +25,11 @@ def generate_image(rotate=0, invert=False, cmode=None, **kwargs):
     lon = kwargs.get("lon")
     tz = kwargs.get("tz")
 
-    cal_data = get_calendar_data()
+    cal_data = get_calendar_data(tz=tz)
     weather_data = fetch_weather(lat, lon, tz)
     news_items = fetch_news(max_items=10)
     hitokoto = fetch_hitokoto()
-    history_items = fetch_history_today()
+    history_items = fetch_history_today(tz=tz)
 
     img, draw = create_canvas("h4xl", palette_type="bw", cmode=cmode)
     W = img.width

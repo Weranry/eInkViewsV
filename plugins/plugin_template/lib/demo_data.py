@@ -1,8 +1,12 @@
 from datetime import datetime
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+from modules.common_timezone import now_in_timezone
 
 
 def build_demo_data(a=None, b=None, tz=None, **kwargs):
-    now = datetime.now()
+    now = now_in_timezone(tz)
     primary = a if a is not None else "alpha"
     secondary = b if b is not None else "beta"
     combined = f"{primary} / {secondary}"

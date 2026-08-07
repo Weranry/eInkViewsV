@@ -1,10 +1,14 @@
 from lunar_python import Solar, Lunar
 from datetime import datetime
 import calendar
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+from modules.common_timezone import now_in_timezone
 
 
-def get_today_data():
-    today = datetime.now()
+def get_today_data(tz=None):
+    today = now_in_timezone(tz)
     return get_date_data(today.year, today.month, today.day)
 
 
@@ -41,8 +45,8 @@ def get_date_data(year, month, day):
     }
 
 
-def get_month_data(year, month):
-    today = datetime.now()
+def get_month_data(year, month, tz=None):
+    today = now_in_timezone(tz)
     days = []
 
     total_days = calendar.monthrange(year, month)[1]

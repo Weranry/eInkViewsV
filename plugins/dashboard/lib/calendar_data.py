@@ -1,9 +1,13 @@
 from lunar_python import Solar, Lunar
 from datetime import datetime
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+from modules.common_timezone import now_in_timezone
 
 
-def get_calendar_data():
-    today = datetime.now()
+def get_calendar_data(tz=None):
+    today = now_in_timezone(tz)
     solar = Solar.fromYmd(today.year, today.month, today.day)
     lunar = solar.getLunar()
 

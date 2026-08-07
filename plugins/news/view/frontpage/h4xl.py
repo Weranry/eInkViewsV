@@ -3,12 +3,12 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 
 import importlib
-from datetime import datetime
 
 canvas_factory = importlib.import_module("modules.generate_views.canvas_factory")
 create_canvas = canvas_factory.create_canvas
 finalize_image_common = canvas_factory.finalize_image_common
 
+from modules.common_timezone import now_in_timezone
 from ...lib.news_data import fetch_news
 from .utils import (
     load_font, text_size, draw_safe_text,
@@ -36,7 +36,7 @@ def generate_image(rotate=0, invert=False, tz=None, cmode=None, **kwargs):
     summary_font = load_font(16)
     ticker_font = load_font(16)
 
-    today_str = datetime.now().strftime("%Y年%m月%d日")
+    today_str = now_in_timezone(tz).strftime("%Y年%m月%d日")
 
     masthead_text = "今日新闻"
     m_tw, m_th = text_size(draw, masthead_text, masthead_font)
