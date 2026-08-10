@@ -3,7 +3,7 @@ import io
 
 
 def image_to_raw_array(img):
-    img_1bit = img.convert('1')
+    img_1bit = img.convert('1', dither=Image.NONE)
     return img_1bit.tobytes()
 
 
