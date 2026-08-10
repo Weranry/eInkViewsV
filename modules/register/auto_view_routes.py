@@ -5,6 +5,7 @@ from flask import send_file, request, make_response, abort
 from modules.errors.errors import ParamError
 from config import DEFAULT_IMAGE_QUALITY, DEFAULT_ROTATE, DEFAULT_INVERT
 from modules.plugins import load_plugin_config
+from modules.generate_views.array_converter import image_to_raw_array_response
 import os
 
 def register_view_routes(bp, plugin_name, view_dir):
@@ -61,6 +62,12 @@ def register_view_routes(bp, plugin_name, view_dir):
                     import traceback
                     traceback.print_exc()
                     raise ParamError(f'图片生成失败: {str(e)}')
+                arraymode_arg = req_args.get('arraymode', 'f').lower()
+                if arraymode_arg == 't':
+                    buf, filename, raw_len = image_to_raw_array_response(img, plugin_name, kind, size)
+                    response = make_response(send_file(buf, mimetype='application/octet-stream', download_name=filename))
+                    response.headers['X-Raw-Bytes'] = str(raw_len)
+                    return response
                 buf = io.BytesIO()
                 img.save(buf, format='JPEG', quality=DEFAULT_IMAGE_QUALITY, subsampling=0, progressive=False)
                 buf.seek(0)

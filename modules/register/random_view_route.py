@@ -6,6 +6,7 @@ from flask import Blueprint, request, send_file, make_response
 from modules.errors.errors import ParamError
 from config import DEFAULT_IMAGE_QUALITY
 from modules.plugins import load_plugin_config
+from modules.generate_views.array_converter import image_to_raw_array_response
 
 bp_random = Blueprint('random_views', __name__)
 
@@ -105,6 +106,12 @@ def random_views():
         img = mod.generate_image(rotate=rotate, invert=invert, cmode=cmode, **extra_params)
     except Exception as e:
         raise ParamError(f'随机图片生成失败: {str(e)}')
+    arraymode_arg = request.args.get('arraymode', 'f').lower()
+    if arraymode_arg == 't':
+        buf, filename, raw_len = image_to_raw_array_response(img, plugin, kind, size)
+        response = make_response(send_file(buf, mimetype='application/octet-stream', download_name=filename))
+        response.headers['X-Raw-Bytes'] = str(raw_len)
+        return response
     buf = io.BytesIO()
     img.save(buf, format='JPEG', quality=DEFAULT_IMAGE_QUALITY, subsampling=0, progressive=False)
     buf.seek(0)
