@@ -1,0 +1,1 @@
+"""Test plugin for generating test pattern images."""

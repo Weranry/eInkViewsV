@@ -1,0 +1,5 @@
+PLUGIN_NAME = "test"
+PLUGIN_DESCRIPTION = "测试插件，生成从 m 到 h4xl 的测试图"
+DEFAULT_ARGS = {}
+DEFAULT_ROTATE = 0
+DEFAULT_INVERT = False

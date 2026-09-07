@@ -1,0 +1,17 @@
+{
+  "semesterStartDate": "2026-03-02",
+  "courses": [
+    {
+      "courseName": "示例课程",
+      "teacher": "张老师",
+      "classroom": [
+        {
+          "week": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+          "dayOfWeek": 2,
+          "lesson": 1,
+          "room": "教学楼101"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+"""Test pattern view package."""

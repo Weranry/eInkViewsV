@@ -16,7 +16,7 @@ def get_plugin_font_path(filename, base_file=__file__):
 def _load_font(size, font_path):
     abs_path = os.path.abspath(font_path)
     try:
-        return ImageFont.truetype(abs_path, size)
+        return ImageFont.FreeTypeFont(abs_path, size)
     except Exception as e:
         raise RuntimeError(f"字体加载失败: {abs_path} ({e})")
 

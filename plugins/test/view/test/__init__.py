@@ -1,0 +1,1 @@
+"""Pattern view kind."""
