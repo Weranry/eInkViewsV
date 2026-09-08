@@ -4,18 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dive into eInkViews</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <title>eInkViews</title>
     <style>
         :root {
-            --primary-color: #6e5494;
-            --text-color: #24292e;
-            --text-color-light: #586069;
-            --border-color: #e1e4e8;
-            --code-bg-color: #f6f8fa;
-            --content-width: 420px;
-            --github-black: #24292e;
-            --block-gap: 1.1rem;
-            /* 控制所有块间距 */
+            --primary: #6e5494;
+            --text: #24292e;
+            --text-light: #586069;
+            --border: #e1e4e8;
+            --code-bg: #f6f8fa;
+            --width: 420px;
+            --gap: 1.1rem;
         }
 
         html,
@@ -25,21 +24,18 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-            color: var(--text-color);
-            background-color: #fff;
-            height: 100vh;
+            color: var(--text);
+            background: #fff;
             margin: 0;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
         }
 
         .container {
-            max-width: var(--content-width);
+            max-width: var(--width);
             width: 100%;
             margin: 0 auto;
             padding: 0 1.2rem;
@@ -48,12 +44,11 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding-bottom: 10vh; /* 新增偏移：将内容视觉中心上移 */
+            padding-bottom: 10vh;
         }
 
         .logo-container {
             margin-bottom: 0.5rem;
-            /* 减少 margin-bottom 从 var(--block-gap) 到 0.5rem */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -74,10 +69,7 @@
 
         .logo-bg:hover,
         .logo-bg:focus {
-            box-shadow:
-                0 8px 28px 0 rgba(110, 84, 148, 0.19),
-                0 3px 12px 0 rgba(110, 84, 148, 0.13),
-                0 0 0 4px rgba(110, 84, 148, 0.08);
+            box-shadow: 0 8px 28px 0 rgba(110, 84, 148, 0.19), 0 3px 12px 0 rgba(110, 84, 148, 0.13), 0 0 0 4px rgba(110, 84, 148, 0.08);
             transform: translateY(-4px) scale(1.035);
         }
 
@@ -103,13 +95,10 @@
         .logo {
             width: 150px;
             height: 150px;
-            margin-bottom: 0;
             display: block;
         }
 
-        .title,
-        .subtitle,
-        .desc {
+        .subtitle {
             max-width: 100%;
             margin-left: auto;
             margin-right: auto;
@@ -118,33 +107,39 @@
         }
 
         .title {
+            position: relative;
+            display: inline-block;
             font-size: 2.5rem;
             font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: var(--block-gap);
+            color: var(--text);
+            margin-bottom: var(--gap);
             letter-spacing: 0.02em;
+        }
+
+        .title sup {
+            position: absolute;
+            top: 0.5em;
+            left: 100%;
+            margin-left: 0.08em;
+            font-size: 0.45em;
+            font-weight: 600;
+            color: var(--primary);
+            white-space: nowrap;
         }
 
         .subtitle {
             font-size: 1rem;
-            color: var(--primary-color);
+            color: var(--primary);
             font-weight: 500;
-            margin-bottom: var(--block-gap);
+            margin-bottom: var(--gap);
             letter-spacing: 0.01em;
-        }
-
-        .desc {
-            font-size: 0.8rem;
-            color: var(--text-color-light);
-            margin-bottom: var(--block-gap);
-            font-weight: 400;
         }
 
         .buttons {
             display: flex;
             justify-content: center;
             gap: 0.7rem;
-            margin: 0 0 0.2rem 0;
+            margin-bottom: 0.2rem;
         }
 
         .button {
@@ -156,32 +151,38 @@
             font-weight: 500;
             font-size: 1rem;
             transition: all 0.2s;
-            min-width: 110px;
+            width: 130px;
             border: none;
             cursor: pointer;
             text-decoration: none;
+            box-sizing: border-box;
         }
 
         .button-github {
-            background-color: var(--github-black);
+            background: var(--text);
             color: #fff;
-            min-width: 70px;
         }
 
         .button-github:hover {
-            background-color: #3a3a3a;
+            background: #3a3a3a;
         }
 
         .button-outline {
             background: rgba(110, 84, 148, 0.08);
-            color: var(--primary-color);
-            border: 1.5px solid var(--primary-color);
+            color: var(--primary);
+            border: 1.5px solid var(--primary);
             backdrop-filter: blur(2px);
-            min-width: 70px;
         }
 
         .button-outline:hover {
             background: rgba(110, 84, 148, 0.18);
+        }
+
+        @media (max-width: 380px) {
+            .buttons {
+                flex-direction: column;
+                align-items: center;
+            }
         }
 
         svg.icon {
@@ -195,45 +196,19 @@
         .footer {
             width: 100%;
             text-align: center;
-            color: var(--text-color-light);
+            color: var(--text-light);
             font-size: 0.85rem;
             padding: 1.2rem 0;
             letter-spacing: 0.01em;
-            user-select: none;
         }
 
-        /* 新增：让 footer 内的链接使用配色变量，并保持无下划线，悬停时显示下划线 */
         .footer a {
-            color: var(--primary-color);
+            color: var(--primary);
             text-decoration: none;
         }
 
-        .footer a:hover,
-        .footer a:focus {
+        .footer a:hover {
             text-decoration: underline;
-        }
-
-        /* 允许按钮、链接、logo区域可交互但不可选中 */
-        .button,
-        .logo-bg,
-        .footer a,
-        .desc a {
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-        }
-
-        .desc a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-
-        .desc a:hover {
-            text-decoration: underline;
-            color: #5a4378;
         }
     </style>
 </head>
@@ -256,11 +231,10 @@
                 </svg>
             </div>
         </div>
-        <div class="title">Dive into eInkViews</div>
-        <div class="subtitle">Scalable Open ePaperlink Price Tag Info Display</div>
-        <div class="desc">Page visible? eInkViews installed and working on <a href="https://vercel.com/" target="_blank" rel="noopener noreferrer">Vercel</a> !</div>
+        <div class="title">eInkViews<sup>Evo</sup></div>
+        <div class="subtitle">Open ePaperlink Info Display</div>
         <div class="buttons">
-            <a href="https://github.com/Weranry/eInkViews" class="button button-github" target="_blank"
+            <a href="https://github.com/Weranry/eInkViewsEvo" class="button button-github" target="_blank"
                 rel="noopener noreferrer">
                 <svg class="icon" viewBox="0 0 16 16" aria-hidden="true">
                     <path
@@ -273,31 +247,23 @@
                 </svg>
                 GitHub
             </a>
-            <a href="https://github.com/Weranry/eInkViews" class="button button-outline" target="_blank"
+            <a href="https://github.com/Weranry/eInkViewsEvo/wiki" class="button button-outline" target="_blank"
                 rel="noopener noreferrer">
-                Docs
+                Wiki
             </a>
         </div>
     </div>
-    <div class="footer" id="footer">
+    <div class="footer">
         <span>
-            Developed For
-            <a href="https://github.com/OpenePaperLink/OpenePaperLink" target="_blank" rel="noopener noreferrer">Open
-                ePaperLink</a>
-            &middot; MIT License
-            &copy; <span id="copyright-year"></span>
-            &middot; Made by
-            <a href="https://github.com/Weranry" target="_blank" rel="noopener noreferrer">Weranry</a>
-            &middot; Prefer  <a href="https://github.com/Weranry/ePaper_Dashboard" target="_blank"
-                rel="noopener noreferrer">ePaperDashboard</a> ?
+            built for <a href="https://github.com/OpenePaperLink/OpenePaperLink" target="_blank" rel="noopener noreferrer">Open ePaperLink</a> But can now do more
+            &middot; AGPL-3.0 &copy; <span id="year"></span>
+            &middot; <a href="https://github.com/Weranry" target="_blank" rel="noopener noreferrer">Weranry</a>
         </span>
     </div>
     <script>
-        const yearSpan = document.getElementById('copyright-year');
-        const startYear = 2024;
-        const nowYear = new Date().getFullYear();
-        yearSpan.textContent = startYear === nowYear ? startYear : `${startYear}-${nowYear}`;
+        const sy = 2024, ny = new Date().getFullYear();
+        document.getElementById('year').textContent = sy === ny ? sy : `${sy}-${ny}`;
     </script>
 </body>
 
-</html>
+</html>b

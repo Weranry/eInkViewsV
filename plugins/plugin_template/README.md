@@ -60,9 +60,13 @@ plugin_template/
 示例调用：
 
 ```text
-http://127.0.0.1:5000/your_plugin/view/summary?size=hxl&a=alpha&b=beta&title=Demo&subtitle=Summary
-http://127.0.0.1:5000/your_plugin/view/detail?size=h2xl&a=alpha&b=beta&title=Demo&left=Left&right=Right
+http://127.0.0.1:5000/plugin_template/view/summary?size=hxl&a=alpha&b=beta&title=Demo&subtitle=Summary
+http://127.0.0.1:5000/plugin_template/view/detail?size=h2xl&a=alpha&b=beta&title=Demo&left=Left&right=Right
+http://127.0.0.1:5000/plugin_template/view/detail?size=h2xl&format=png
+http://127.0.0.1:5000/plugin_template/view/detail?size=h2xl&format=array
 ```
+
+`format` 参数支持：`jpg`（默认）/ `png` / `bmp` / `array`（原始像素数组）。
 
 ## 文件职责
 

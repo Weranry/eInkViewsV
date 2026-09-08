@@ -1,4 +1,4 @@
-PLUGIN_NAME = "your_plugin"
+PLUGIN_NAME = "plugin_template"
 PLUGIN_DESCRIPTION = "通用 eInkViews 插件模板"
 DEFAULT_ARGS = {
     "a": "alpha",

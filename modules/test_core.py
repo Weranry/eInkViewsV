@@ -31,7 +31,7 @@ def create_app():
     app.config['JSON_AS_ASCII'] = False
     app.json.ensure_ascii = False
     
-    register_plugins(app)
+    plugin_result = register_plugins(app)
     register_error_handlers(app)
     app.register_blueprint(bp_random)
     app.register_blueprint(bp_templates)
@@ -47,27 +47,68 @@ def create_app():
             response.headers['Content-Type'] = 'application/json; charset=utf-8'
         return response
 
-    return app
+    return app, plugin_result
 
 def print_help():
     print("\n 可用命令:")
-    print("  help    - 显示此帮助信息")
-    print("  routes  - 列出所有详细路由及其参数")
-    print("  exit    - 退出程序")
+    print("  help     - 显示此帮助信息")
+    print("  routes   - 列出所有详细路由及其参数")
+    print("  plugins  - 列出所有插件及其描述")
+    print("  config   - 显示当前配置参数")
+    print("  auth     - 显示鉴权状态与白名单")
+    print("  exit     - 退出程序")
 
 def print_routes(app):
-    print("\n" + "="*30 + " 详细路由列表 " + "="*30)
+    print("\n详细路由列表:")
     rules = sorted(list(app.url_map.iter_rules()), key=lambda x: str(x))
     for rule in rules:
         if "static" in rule.endpoint: 
             continue
         methods = ','.join(sorted(rule.methods - {'OPTIONS', 'HEAD'}))
-        print(f"[{methods}] {str(rule)}")
+        print(f"  [{methods}] {str(rule)}")
         if rule.arguments:
-            print(f"      ↳ 参数: {', '.join(rule.arguments)}")
-    print("="*74 + "\n")
+            print(f"    ↳ 参数: {', '.join(rule.arguments)}")
 
-def console_listener(app):
+def print_plugins(plugin_result):
+    plugins = plugin_result.get('plugins', [])
+    if not plugins:
+        print("\n无已加载插件")
+        return
+    print(f"已加载插件:")
+    for p in plugins:
+        print(f"{p['name']}|{p['description']}")
+
+def print_config():
+    from config import (
+        DEFAULT_ROTATE, DEFAULT_INVERT,
+        DEFAULT_JPEG_QUALITY, DEFAULT_WEBP_QUALITY,
+        DEFAULT_PNG_COMPRESS_LEVEL, DEFAULT_TIFF_COMPRESSION,
+        DEFAULT_IMAGE_FORMAT, DEFAULT_TIMEZONE_OFFSET
+    )
+    print("参数配置:")
+    print(f"  DEFAULT_ROTATE             = {DEFAULT_ROTATE}")
+    print(f"  DEFAULT_INVERT             = {DEFAULT_INVERT}")
+    print(f"  DEFAULT_JPEG_QUALITY       = {DEFAULT_JPEG_QUALITY}")
+    print(f"  DEFAULT_WEBP_QUALITY       = {DEFAULT_WEBP_QUALITY}")
+    print(f"  DEFAULT_PNG_COMPRESS_LEVEL = {DEFAULT_PNG_COMPRESS_LEVEL}")
+    print(f"  DEFAULT_TIFF_COMPRESSION   = {DEFAULT_TIFF_COMPRESSION}")
+    print(f"  DEFAULT_IMAGE_FORMAT       = {DEFAULT_IMAGE_FORMAT}")
+    print(f"  DEFAULT_TIMEZONE_OFFSET    = {DEFAULT_TIMEZONE_OFFSET}")
+
+def print_auth():
+    from config import AUTH_ENABLE, AUTH_WHITELIST
+    import os as _os
+    env_key = _os.environ.get('EVKEY')
+    print("\n鉴权状态:")
+    status = "已启用" if AUTH_ENABLE else "未启用"
+    print(f"  鉴权: {status}")
+    if AUTH_ENABLE:
+        print(f"  EVKEY 环境变量: {'已设置' if env_key else '未设置'}")
+    print(f"  白名单路径:")
+    for path in AUTH_WHITELIST:
+        print(f"    - {path}")
+
+def console_listener(app, plugin_result):
     while True:
         try:
             cmd = input(">>> ").strip().lower()
@@ -75,6 +116,12 @@ def console_listener(app):
                 print_help()
             elif cmd == 'routes':
                 print_routes(app)
+            elif cmd == 'plugins':
+                print_plugins(plugin_result)
+            elif cmd == 'config':
+                print_config()
+            elif cmd == 'auth':
+                print_auth()
             elif cmd == 'exit':
                 print("正在退出...")
                 os._exit(0)
@@ -86,37 +133,33 @@ def console_listener(app):
             break
 
 def run_test_server():
-    overall_start = time.time()
     try:
         startup_banner()
         EINKVIEWS_START_TIME = datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
         print(f"启动时间: {EINKVIEWS_START_TIME}")
 
-        plugins_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'plugins')
-        plugin_names = []
-        if os.path.exists(plugins_dir):
-            plugin_names = [
-                name for name in os.listdir(plugins_dir)
-                if os.path.isdir(os.path.join(plugins_dir, name)) and os.path.exists(os.path.join(plugins_dir, name, 'routes.py'))
-            ]
-        
-        print(f"发现可用插件 {len(plugin_names)} 个: {', '.join(plugin_names) if plugin_names else '无'}")
-        
-        total_start = time.time()
+        startup_start = time.time()
         try:
-            app = create_app()
+            app, plugin_result = create_app()
         except Exception as e:
             print(f"致命错误: Flask 应用初始化失败 - {e}")
             sys.exit(1)
-            
-        total_elapsed = time.time() - total_start
-        overall_elapsed = time.time() - overall_start + 1
-        print(f"装载耗时: {total_elapsed:.3f}s | 总启动耗时: {overall_elapsed:.3f}s")
-        print("版本: 26.1.10")
-        print(f"注意: 仅供本地测试使用。输入 'help' 获取指令。")
-        print("访问地址: http://127.0.0.1:5000")
+        startup_elapsed = time.time() - startup_start
 
-        t = threading.Thread(target=console_listener, args=(app,), daemon=True)
+        total = plugin_result.get('total', 0)
+        success = plugin_result.get('success', 0)
+        failed = plugin_result.get('failed', 0)
+        print(f"发现插件 {total} 个，加载成功 {success} 个，失败 {failed} 个")
+
+        from config import AUTH_ENABLE
+        auth_status = "已启用" if AUTH_ENABLE else "未启用"
+        print(f"鉴权状态: {auth_status}")
+        print(f"启动耗时: {startup_elapsed:.3f}s")
+        print("版本: 26.9.1")
+        print("访问地址: http://127.0.0.1:5000")
+        print(f"注意: 仅供本地测试使用。输入 'help' 获取指令。")
+
+        t = threading.Thread(target=console_listener, args=(app, plugin_result), daemon=True)
         t.start()
 
         if (cli := sys.modules.get('flask.cli')):

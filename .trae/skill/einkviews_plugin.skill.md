@@ -20,11 +20,12 @@ description: "Work-flow skill for creating, modifying, or debugging eInkViews pl
 - 先拿数据，再创建画布
 - 黑色必须显式用 `fill=1` 或 `fill=(0,0,0)`
 - 所有网络请求必须设置 `timeout`
-- 文本尺寸必须用 `draw.textbbox()` 计算
+- 所有时间相关操作必须使用 `modules.common_timezone` 提供的函数（`now_in_timezone`、`convert_utc_to_local`、`get_timezone_offset`），禁止直接 `datetime.now()` 或手动做时区运算
 - 位图必须做 Floyd-Steinberg 抖动
-- 默认同时实现 `hxl` 和 `h2xl`
+- 默认同时实现 `hxl` 和 `h2xl`,除非用户明确指定 `size` 为某些特定大小
 - `h2xl` 必须独立布局，不得简单缩放
 - 测试入口只能用 `python -B test.py`
+- 可以参考 `plugins/` 下的`plugin_template`插件，这是一个简单的插件模板，用于快速开始新插件开发。
 
 ## 推荐工作流
 

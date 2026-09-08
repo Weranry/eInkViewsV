@@ -9,7 +9,7 @@ from modules.register.random_view_route import bp_random
 from modules.register.template_routes import bp_templates
 from modules.evkey_auth import check_auth
 
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '.'))
+project_root = os.path.dirname(os.path.abspath(__file__))
 public_dir = os.path.join(project_root, 'public')
 app = Flask(__name__, template_folder=public_dir)
 app.config['JSON_AS_ASCII'] = False
@@ -29,5 +29,3 @@ def set_charset(response):
 
 if __name__ == '__main__':
     app.run()
-
-        

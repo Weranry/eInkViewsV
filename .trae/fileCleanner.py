@@ -42,7 +42,7 @@ def is_temp_file(name: str) -> bool:
 
 def cleanup():
     """清理项目中的临时文件，包括 __pycache__、编译文件、Apple 隐藏文件等。"""
-    project_root = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     print(f"开始清理项目目录: {project_root}")
 
     count_dirs = 0

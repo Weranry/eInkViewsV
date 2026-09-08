@@ -4,7 +4,7 @@ from modules.register.auto_view_routes import register_view_routes
 from modules.register.auto_json_routes import register_json_routes
 from modules.register.auto_page_routes import register_page_routes
 
-PLUGIN_NAME = "your_plugin"
+PLUGIN_NAME = "plugin_template"
 PLUGIN_DESCRIPTION = "插件模板"
 
 bp = Blueprint(PLUGIN_NAME, __name__)

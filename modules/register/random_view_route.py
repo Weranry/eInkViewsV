@@ -1,12 +1,10 @@
-import io
-import hashlib
 import os
 import importlib
-from flask import Blueprint, request, send_file, make_response
+from flask import Blueprint, request
 from modules.errors.errors import ParamError
-from config import DEFAULT_IMAGE_QUALITY
+from config import DEFAULT_IMAGE_FORMAT
 from modules.plugins import load_plugin_config
-from modules.generate_views.array_converter import image_to_raw_array_response
+from modules.generate_views.image_output import save_image
 
 bp_random = Blueprint('random_views', __name__)
 
@@ -77,6 +75,7 @@ def random_views():
         extra_params.update(params)
         extra_params.pop('rotate', None)
         extra_params.pop('invert', None)
+        extra_params.pop('cmode', None)
         cmode = params.get('cmode', cmode_global if cmode_global is not None else plugin_default_args.get('cmode', None))
         rotate_val = params.get('rotate', None)
         if rotate_val is not None:
@@ -106,15 +105,5 @@ def random_views():
         img = mod.generate_image(rotate=rotate, invert=invert, cmode=cmode, **extra_params)
     except Exception as e:
         raise ParamError(f'随机图片生成失败: {str(e)}')
-    arraymode_arg = request.args.get('arraymode', 'f').lower()
-    if arraymode_arg == 't':
-        buf, filename, raw_len = image_to_raw_array_response(img, plugin, kind, size)
-        response = make_response(send_file(buf, mimetype='application/octet-stream', download_name=filename))
-        response.headers['X-Raw-Bytes'] = str(raw_len)
-        return response
-    buf = io.BytesIO()
-    img.save(buf, format='JPEG', quality=DEFAULT_IMAGE_QUALITY, subsampling=0, progressive=False)
-    buf.seek(0)
-    filename = f"{plugin}_{kind}_{size}.jpg"
-    response = make_response(send_file(buf, mimetype='image/jpeg', download_name=filename))
-    return response
+    img_format = request.args.get('format', DEFAULT_IMAGE_FORMAT)
+    return save_image(img, img_format, [plugin, kind, size])

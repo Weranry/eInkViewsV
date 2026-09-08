@@ -26,7 +26,7 @@ eInkViews 是为 Open ePaper Link 设计的墨水屏图像渲染与分发服务�
 
 | 类型 | 路由 | 说明 |
 | :--- | :--- | :--- |
-| 视图 | `/{plugin}/view/{kind}?size=hxl` | 返回生成的 JPEG 图像 |
+| 视图 | `/{plugin}/view/{kind}?size=hxl` | 返回生成的图像，支持 jpg / png / bmp / array |
 | JSON | `/{plugin}/json/{name}` | 返回插件原始数据或结构化结果 |
 | 页面 | `/{plugin}/page/{name}` | 返回插件自带 HTML 页面 |
 | 随机视图 | `/random/views?routes=...` | 支持加权随机选择多个视图 |
@@ -41,10 +41,35 @@ eInkViews 是为 Open ePaper Link 设计的墨水屏图像渲染与分发服务�
 | `rotate` | `0, c, cc, h` | 旋转：无、顺时针 90°、逆时针 90°、180° |
 | `invert` | `t, f` | 是否反色 |
 | `cmode` | `2bw, r2y, y2r, yr2r, yr2y` | 调色板降级模式 |
+| `format` | `jpg, png, bmp, array` | 输出格式，默认 `jpg` |
 | `tz` | 如 `Asia/Shanghai` | 时区参数 |
 | `evkey` | 字符串 | 鉴权密钥 |
 
 注意：测试链接和文档示例中不要带 `palette` 参数，调色板应在代码中固定，不通过 GET 传递。
+
+## 随机视图用法
+
+`/random/views` 支持一次请求随机命中多个视图中的一个，适合墨水屏设备轮播展示。
+
+### 参数格式
+
+```
+routes=插件名.视图类型:尺寸:权重:参数1=值1:参数2=值2, ...
+```
+
+- `插件名.视图类型` — 如 `plugin_template.summary`
+- `尺寸` — `hxl` / `h2xl` 等
+- `权重` — 浮点数，越大越容易被选中，默认 1.0
+- `参数` — 该视图需要的额外参数，以 `key=value` 形式追加
+
+### 示例
+
+```
+http://127.0.0.1:5000/random/views?routes=plugin_template.summary:hxl:1.0:a=hello:b=world
+http://127.0.0.1:5000/random/views?routes=plugin_template.summary:hxl:1.0:a=hello,plugin_template.detail:h2xl:0.5:a=detail
+```
+
+第一条固定选 `summary`，第二条 `summary` 权重 1.0 对 `detail` 权重 0.5，约 67% 概率命中前者。
 
 ## 目录结构
 
@@ -100,6 +125,7 @@ eInkViews/
 | :--- | :--- |
 | `modules/generate_views/canvas_factory.py` | 创建画布、定义尺寸和调色板、完成最终图像处理 |
 | `modules/generate_views/font_loader.py` | 加载全局字体和插件字体 |
+| `modules/generate_views/image_output.py` | 统一图像输出，支持 jpg / png / bmp / array 格式 |
 | `modules/generate_views/image_transform.py` | 旋转、反色等图像处理 |
 | `modules/generate_views/palette_mapper.py` | 调色板降级映射 |
 | `modules/generate_views/qrcode_util.py` | 生成二维码 |
@@ -221,51 +247,9 @@ plugins/your_plugin/
 - 所有文字、线条和图形绘制前都要检查边界，避免溢出
 - 如果插入位图，必须使用 Floyd-Steinberg 抖动
 
-## 插件参数类型
-
-| 类型 | 典型插件 | 必需参数 | 说明 |
-| :--- | :--- | :--- | :--- |
-| 地理位置相关 | `openmeteo`、`lunar`、`ics_calendar` | `lat`、`lon`、`tz` | 任一坐标存在时，两个坐标都必须提供 |
-| 用户标识相关 | `github` | `username` | 需要在路由或 lib 中校验非空 |
-| 内容选择相关 | `hitokoto` | 无 | 仅透传如 `category`、`c`、`type` 等参数 |
-| 资源文件相关 | `schedule` | `json_name` | 不存在时返回 `NotFoundError` |
-| 纯内容插件 | `zhihu`、`news` | 无 | 无需额外参数 |
-
 ## 插件开发参考
 
-如果你要新写一个插件，可以直接参考 [plugin_template/README.md](plugin_template/README.md) 的骨架，再对照 [lunar/README.md](lunar/README.md) 的真实写法做替换。
-
-### 参考结构
-
-`lunar` 是一个很适合照着写的例子，它把“数据计算、JSON 接口、双尺寸视图”分得很清楚：
-
-- `routes.py` 负责注册蓝图、视图路由和 JSON 路由
-- `plugin_config.py` 负责插件名、描述和默认参数
-- `lib/date_calculator.py` 负责公历、农历、干支、节气和节日数据
-- `json_module/datejson.py` 负责输出结构化日期数据
-- `view/rili/` 负责日历视图
-- `view/huangli/` 负责黄历视图
-- `view/huanglia/` 负责另一套黄历布局
-
-### 视图写法
-
-`lunar` 的视图结构可以直接概括成下面这个模式：
-
-1. 先从 `lib/` 拿到完整数据
-2. 再用 `create_canvas(size_key, 'bwr', cmode=cmode)` 创建画布
-3. 在 `hxl` 和 `h2xl` 两个文件里分别写独立布局
-4. 最后统一调用 `finalize_image_common(img, rotate=rotate, invert=invert)` 返回结果
-
-### 插件模板
-
-`plugin_template/` 是一个可直接复制的模板目录，已经按 `lunar` 的结构预留了：
-
-- `rili` 和 `huangli` 两个示例视图目录
-- `lib/date_calculator.py` 的数据占位
-- `json_module/datejson.py` 的 JSON 入口
-- `routes.py` 和 `plugin_config.py` 的标准骨架
-
-你创建新插件时，可以先复制这个目录，再把里面的 `your_plugin`、`rili`、`huangli` 和示例数据替换成自己的业务内容。
+如果你要新写一个插件，可以直接参考 [plugin_template/README.md](plugin_template/README.md) 的骨架来做替换。
 
 ## 参数优先级
 
@@ -286,16 +270,6 @@ python -B test.py
 ```
 
 不要使用 `app.py` 作为开发测试入口。`app.py` 主要面向生产和 Vercel 部署。
-
-### 测试链接格式
-
-测试时请使用完整 URL，不要使用相对路径，也不要带 `palette` 参数：
-
-- 地理位置类：`http://127.0.0.1:5000/openmeteo/view/now?size=hxl&lat=31.23&lon=121.47&tz=Asia/Shanghai`
-- 用户标识类：`http://127.0.0.1:5000/github/view/dashboard?size=hxl&username=octocat`
-- 内容选择类：`http://127.0.0.1:5000/hitokoto/view/quote?size=hxl`
-- 资源文件类：`http://127.0.0.1:5000/schedule/view/schedule_view?size=hxl`
-- 纯内容类：`http://127.0.0.1:5000/zhihu/view/daily?size=hxl`
 
 ## 部署说明
 
@@ -334,5 +308,3 @@ python -B test.py
 - 每个新视图种类都有独立的 `lib` 模块
 - 所有网络请求都带 `timeout`
 - 所有绘图都先检查边界
-
-

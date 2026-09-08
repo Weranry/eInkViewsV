@@ -1,11 +1,9 @@
-import io
-import hashlib
 import importlib
-from flask import send_file, request, make_response, abort
+from flask import request
 from modules.errors.errors import ParamError
-from config import DEFAULT_IMAGE_QUALITY, DEFAULT_ROTATE, DEFAULT_INVERT
+from config import DEFAULT_ROTATE, DEFAULT_INVERT, DEFAULT_IMAGE_FORMAT
 from modules.plugins import load_plugin_config
-from modules.generate_views.array_converter import image_to_raw_array_response
+from modules.generate_views.image_output import save_image
 import os
 
 def register_view_routes(bp, plugin_name, view_dir):
@@ -34,8 +32,8 @@ def register_view_routes(bp, plugin_name, view_dir):
                 req_args = {k: (v[0] if isinstance(v, list) and len(v) > 0 else v) for k, v in dict(request.args).items()}
                 merged_args = dict(plugin_default_args)
                 merged_args.update(req_args)
-                cmode = merged_args.get('cmode', None)
-                rotate_arg = merged_args.get('rotate')
+                cmode = merged_args.pop('cmode', None)
+                rotate_arg = merged_args.pop('rotate', None)
                 if rotate_arg is not None:
                     rotate_map = {'c': 270, 'cc': 90, 'h': 180}
                     rotate = rotate_map.get(rotate_arg, 0)
@@ -43,7 +41,7 @@ def register_view_routes(bp, plugin_name, view_dir):
                     rotate = plugin_default_rotate
                 else:
                     rotate = DEFAULT_ROTATE
-                invert_arg = req_args.get('invert')
+                invert_arg = merged_args.pop('invert', None)
                 invert_map = {'t': True, 'f': False}
                 if invert_arg is not None:
                     try:
@@ -62,18 +60,8 @@ def register_view_routes(bp, plugin_name, view_dir):
                     import traceback
                     traceback.print_exc()
                     raise ParamError(f'图片生成失败: {str(e)}')
-                arraymode_arg = req_args.get('arraymode', 'f').lower()
-                if arraymode_arg == 't':
-                    buf, filename, raw_len = image_to_raw_array_response(img, plugin_name, kind, size)
-                    response = make_response(send_file(buf, mimetype='application/octet-stream', download_name=filename))
-                    response.headers['X-Raw-Bytes'] = str(raw_len)
-                    return response
-                buf = io.BytesIO()
-                img.save(buf, format='JPEG', quality=DEFAULT_IMAGE_QUALITY, subsampling=0, progressive=False)
-                buf.seek(0)
-                filename = f"{plugin_name}_{kind}_{size}.jpg"
-                response = make_response(send_file(buf, mimetype='image/jpeg', download_name=filename))
-                return response
+                img_format = merged_args.pop('format', None) or req_args.get('format', DEFAULT_IMAGE_FORMAT)
+                return save_image(img, img_format, [plugin_name, kind, size])
             view_func.__name__ = f'view_{plugin_name}_{kind}'
             return view_func
         bp.add_url_rule(f'/{plugin_name}/view/{kind}', view_func=make_view_func())

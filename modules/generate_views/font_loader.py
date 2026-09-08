@@ -9,14 +9,14 @@ def get_root_font_path(filename):
 # 获取插件目录下的字体路径
 # base_file: 调用者的 __file__，从调用者所在目录向上两级到达插件根目录
 # 例如 hxl.py 位于 plugins/weather/view/temp_gauge/，向上两级 = plugins/weather/
-def get_plugin_font_path(filename, base_file=__file__):
+def get_plugin_font_path(filename, base_file):
     plugin_root = os.path.abspath(os.path.join(os.path.dirname(base_file), '../..'))
     return os.path.join(plugin_root, 'assets', 'fonts', filename)
 
 def _load_font(size, font_path):
     abs_path = os.path.abspath(font_path)
     try:
-        return ImageFont.FreeTypeFont(abs_path, size)
+        return ImageFont.truetype(abs_path, size)
     except Exception as e:
         raise RuntimeError(f"字体加载失败: {abs_path} ({e})")
 
