@@ -19,17 +19,22 @@
 
         html,
         body {
-            height: 100%;
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            touch-action: manipulation;
+            overscroll-behavior: none;
+            -webkit-overscroll-behavior: none;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
             color: var(--text);
             background: #fff;
-            margin: 0;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
         }
@@ -37,6 +42,10 @@
         .container {
             max-width: var(--width);
             width: 100%;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+            box-sizing: border-box;
             margin: 0 auto;
             padding: 0 1.2rem;
             flex: 1;
@@ -103,7 +112,7 @@
             margin-left: auto;
             margin-right: auto;
             text-align: center;
-            white-space: nowrap;
+            overflow-wrap: break-word;
         }
 
         .title {
@@ -116,7 +125,11 @@
             letter-spacing: 0.02em;
         }
 
-        .title sup {
+        .title-text {
+            display: inline-block;
+        }
+
+        .title-badge {
             position: absolute;
             top: 0.5em;
             left: 100%;
@@ -137,6 +150,7 @@
 
         .buttons {
             display: flex;
+            flex-wrap: wrap;
             justify-content: center;
             gap: 0.7rem;
             margin-bottom: 0.2rem;
@@ -151,7 +165,8 @@
             font-weight: 500;
             font-size: 1rem;
             transition: all 0.2s;
-            width: 130px;
+            min-width: 110px;
+            flex: 1 1 auto;
             border: none;
             cursor: pointer;
             text-decoration: none;
@@ -178,10 +193,52 @@
             background: rgba(110, 84, 148, 0.18);
         }
 
-        @media (max-width: 380px) {
+        @media (max-width: 420px) {
             .buttons {
                 flex-direction: column;
                 align-items: center;
+            }
+            .title {
+                font-size: 2rem;
+            }
+            .subtitle {
+                font-size: 0.9rem;
+            }
+            .logo {
+                width: 110px;
+                height: 110px;
+            }
+            .logo-bg {
+                border-radius: 24px;
+            }
+            .button {
+                min-width: 0;
+                width: 100%;
+                padding: 0.5rem 1rem;
+                font-size: 0.95rem;
+            }
+        }
+
+        @media (max-width: 300px) {
+            .container {
+                padding: 0 0.8rem;
+            }
+            .title {
+                font-size: 1.65rem;
+            }
+            .subtitle {
+                font-size: 0.8rem;
+            }
+            .logo {
+                width: 90px;
+                height: 90px;
+            }
+            .logo-bg {
+                border-radius: 20px;
+            }
+            .button {
+                padding: 0.45rem 0.8rem;
+                font-size: 0.85rem;
             }
         }
 
@@ -194,12 +251,16 @@
         }
 
         .footer {
+            flex-shrink: 0;
             width: 100%;
+            overflow: hidden;
+            box-sizing: border-box;
             text-align: center;
             color: var(--text-light);
             font-size: 0.85rem;
             padding: 1.2rem 0;
             letter-spacing: 0.01em;
+            overflow-wrap: break-word;
         }
 
         .footer a {
@@ -231,7 +292,7 @@
                 </svg>
             </div>
         </div>
-        <div class="title">eInkViews<sup>Evo</sup></div>
+        <div class="title"><span class="title-text">eInkViews</span><sup class="title-badge">Evo</sup></div>
         <div class="subtitle">Open ePaperlink Info Display</div>
         <div class="buttons">
             <a href="https://github.com/Weranry/eInkViewsEvo" class="button button-github" target="_blank"
@@ -266,4 +327,4 @@
     </script>
 </body>
 
-</html>b
+</html>
