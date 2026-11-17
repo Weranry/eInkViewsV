@@ -1,20 +1,18 @@
-from datetime import datetime
 from lunar_python import Solar, Lunar
-from modules.common_timezone import now_in_timezone, get_timezone_offset
+from modules.utils.timezone import now_in_timezone
+
 
 class todayhuangliA:
     def __init__(self, tz=None):
-        self.timezone_offset = get_timezone_offset(tz)
-        self._now = now_in_timezone(self.timezone_offset)
+        self._now = now_in_timezone(tz)
         self._solar = Solar.fromDate(self._now)
         self._lunar = Lunar.fromDate(self._now)
-    
+
     def get_solar_date(self):
         solar_year = str(self._solar.getYear())
         solar_month = str(self._solar.getMonth()).zfill(2)
         solar_day = str(self._solar.getDay()).zfill(2)
         xingzuo = str(self._solar.getXingZuo()) + "座"
-        # 获取星期几
         weekdays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
         weekday = weekdays[self._now.weekday()]
         return {
@@ -22,7 +20,7 @@ class todayhuangliA:
             "solar_month": solar_month,
             "solar_day": solar_day,
             "weekday": weekday,
-            "xingzuo" : xingzuo
+            "xingzuo": xingzuo
         }
 
     def get_lunar_date(self):
@@ -44,7 +42,7 @@ class todayhuangliA:
             "ganzhi_day": ganzhi_day,
             "shengxiao": shengxiao
         }
-    
+
     def get_Day_Yiji(self):
         Day_Yi = self._lunar.getDayYi()
         Day_Ji = self._lunar.getDayJi()

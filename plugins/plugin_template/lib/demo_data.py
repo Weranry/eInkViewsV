@@ -1,6 +1,4 @@
-from datetime import datetime
-import os
-from modules.common_timezone import now_in_timezone
+from modules.utils.timezone import now_in_timezone
 
 
 def build_demo_data(a=None, b=None, tz=None, **kwargs):

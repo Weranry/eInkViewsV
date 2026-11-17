@@ -15,6 +15,7 @@
 plugin_template/
 ├── __init__.py
 ├── README.md
+├── plugin.json
 ├── plugin_config.py
 ├── routes.py
 ├── lib/
@@ -62,21 +63,25 @@ plugin_template/
 ```text
 http://127.0.0.1:5000/plugin_template/view/summary?size=hxl&a=alpha&b=beta&title=Demo&subtitle=Summary
 http://127.0.0.1:5000/plugin_template/view/detail?size=h2xl&a=alpha&b=beta&title=Demo&left=Left&right=Right
-http://127.0.0.1:5000/plugin_template/view/detail?size=h2xl&format=png
-http://127.0.0.1:5000/plugin_template/view/detail?size=h2xl&format=array
+http://127.0.0.1:5000/plugin_template/view/detail?size=h2xl&format=jpg
+http://127.0.0.1:5000/plugin_template/view/detail?size=h2xl&format=bwrarray
 ```
 
-`format` 参数支持：`jpg`（默认）/ `png` / `bmp` / `array`（原始像素数组）。
+`format` 参数支持：`jpg`（默认）/ `jpeg` / `png` / `bmp` / `webp` / `tiff` / `gif`，以及**数组格式族** `array`（= `bwarray`，白黑 1bpp）/ `bwrarray` / `bwyarray` / `bwryarray`（2bpp）/ `7carray`（3bpp）——数组格式返回按调色板索引打包的位流（码表 白=0、黑=1、红=2、黄=3、绿=4、蓝=5、橙=6，MSB 在前、行末补 0 bit 到整字节），用哪个由视图的调色板决定。注意全局配置 `IMAGE_FORMAT_BLACKLIST` 默认会拒绝 `png` / `bmp` / `webp` / `tiff` / `gif`，因此**默认配置下实际可用的只有 `jpg` / `jpeg` 与整个数组格式族**；要开放其它格式需在管理面板或 `config.py` 中调整黑名单。
 
 ## 文件职责
 
 ### routes.py
 
-负责定义 `PLUGIN_NAME`、`PLUGIN_DESCRIPTION` 和蓝图注册。它只做路由装配，不承载业务逻辑。
+负责定义插件名常量与蓝图注册。它只做路由装配，不承载业务逻辑。其中的 `PLUGIN_DESCRIPTION` 只是描述兜底值：面板显示的描述优先取 `plugin.json` 的 `description`。
+
+### plugin.json
+
+负责声明插件元信息（版本、描述、作者、最低框架版本、依赖）。这是元信息的唯一来源，改名时记得同步 `name` 与目录名。
 
 ### plugin_config.py
 
-负责定义插件元数据和默认参数。这里建议只放真正需要的默认值，避免把业务逻辑写进去。
+负责定义插件默认参数与配置项的显示名（`CONFIG_LABELS`）。这里建议只放真正需要的默认值，避免把业务逻辑写进去。
 
 ### lib/
 
@@ -116,7 +121,7 @@ http://127.0.0.1:5000/plugin_template/view/detail?size=h2xl&format=array
 ## 使用方式
 
 1. 复制 `plugin_template` 并改成真实插件名。
-2. 修改 `PLUGIN_NAME`、`PLUGIN_DESCRIPTION` 和默认参数。
+2. 修改 `plugin.json` 的 `name` / `description`、`routes.py` 里的 `PLUGIN_NAME`，以及 `plugin_config.py` 的默认参数与 `CONFIG_LABELS`。
 3. 用自己的数据逻辑替换 `lib/demo_data.py`。
 4. 在 `view/summary` 和 `view/detail` 中专注排版。
 5. 把重复的计算放进 `utils.py`。

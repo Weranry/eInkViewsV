@@ -1,7 +1,7 @@
 from modules.generate_views.canvas_factory import create_canvas, finalize_image_common
 from modules.generate_views.font_loader import get_font as get_font_global
-from .utils import FONT_PATHS, get_huangli_data
-from PIL import ImageDraw
+from .utils import FONT_PATH, get_huangli_data
+
 
 def generate_image(rotate=0, invert=False, tz=None, cmode=None, **kwargs):
     img, draw = create_canvas('h2xl', palette_type='bwr', cmode=cmode)
@@ -9,8 +9,8 @@ def generate_image(rotate=0, invert=False, tz=None, cmode=None, **kwargs):
     jishen, taishen, taisui, pengzubaiji, ershibaxingxiu, chongsha = get_huangli_data(tz=tz)
 
     # 标题
-    title_font = get_font_global(24, font_path=FONT_PATHS['default'])
-    font = get_font_global(16, font_path=FONT_PATHS['default'])
+    title_font = get_font_global(24, font_path=FONT_PATH)
+    font = get_font_global(16, font_path=FONT_PATH)
     draw.text((200, 28), "黄历", fill=1, font=title_font, anchor='mm')
 
     # 吉神（居中横排）
@@ -45,7 +45,7 @@ def generate_image(rotate=0, invert=False, tz=None, cmode=None, **kwargs):
     draw.line([(30, 235), (370, 235)], fill=1, width=1)
 
     # 彭祖百忌
-    bz_font = get_font_global(18, font_path=FONT_PATHS['default'])
+    bz_font = get_font_global(18, font_path=FONT_PATH)
     draw.text((200, 255), "彭祖百忌", fill=1, font=bz_font, anchor='mm')
     draw.text((200, 285), pengzubaiji, fill=1, font=font, anchor='mm')
     return finalize_image_common(img, rotate=rotate, invert=invert)

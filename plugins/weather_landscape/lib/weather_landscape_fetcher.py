@@ -1,12 +1,23 @@
-import json
+"""OpenWeatherMap 取数：请求参数 → 可展示的天气序列。
+
+只做数据（含网络与日出日落计算），不碰画布；视图层拿 `weather_data` 直接画。
+传给视图的一切时间都是**插件的时区下的 naive 本地时间**，跨时区比较不做转换。
+"""
+import asyncio
 import datetime
-import requests
-from math import cos, sin, acos, asin, tan
-from math import degrees as deg, radians as rad
-from modules.common_timezone import convert_utc_to_local, now_in_timezone
+from math import acos, asin, cos
+from math import degrees as deg
+from math import radians as rad, sin, tan
+
+import httpx
+
+from modules.errors.errors import ParamError
+from modules.utils.timezone import convert_utc_to_local, get_timezone_offset, now_in_timezone
+
 
 class WeatherData:
-    """整合获取天气数据的功能"""
+    """实况 + 预报的合并序列，天气项按时间升序排列"""
+
     TEMP_UNITS_CELSIUS = 0
     TEMP_UNITS_FAHRENHEIT = 1
     KTOC = 273.15
@@ -32,25 +43,31 @@ class WeatherData:
         self.url_forecast = f"{self.OWMURL}forecast?{self.reqstr}"
         self.url_current = f"{self.OWMURL}weather?{self.reqstr}"
 
-    def get_weather_data(self):
-        """从OpenWeatherMap API获取天气数据"""
-        self.weather_data = []
+    @staticmethod
+    async def _fetch_json(client, url):
+        response = await client.get(url)
+        response.raise_for_status()
+        return response.json()
+
+    async def get_weather_data(self):
+        """拉取实况与预报，返回按时间升序的序列。
+
+        两个端点互不依赖，并发发出——串行发等于把两次网络等待叠在一起，
+        而视图中转的每一毫秒都占着渲染槽位。
+        """
         try:
-            curr_response = requests.get(self.url_current, timeout=10)
-            curr_response.raise_for_status()
-            curr_data = curr_response.json()
-            forecast_response = requests.get(self.url_forecast, timeout=10)
-            forecast_response.raise_for_status()
-            forecast_data = forecast_response.json()
-            self.weather_data.append(self._process_weather_info(curr_data))
-            if 'list' in forecast_data:
-                for forecast in forecast_data['list']:
-                    if self._check_weather_data(forecast):
-                        self.weather_data.append(self._process_weather_info(forecast))
-        except requests.exceptions.RequestException as e:
-            from modules.errors.errors import ParamError
-            raise ParamError(f"fetch failed: {e}")
-        
+            async with httpx.AsyncClient(timeout=10) as client:
+                current, forecast = await asyncio.gather(
+                    self._fetch_json(client, self.url_current),
+                    self._fetch_json(client, self.url_forecast),
+                )
+        except httpx.HTTPError as exc:
+            raise ParamError(f"天气数据获取失败: {exc}")
+
+        self.weather_data = [self._process_weather_info(current)]
+        for item in forecast.get('list') or []:
+            if self._check_weather_data(item):
+                self.weather_data.append(self._process_weather_info(item))
         return self.weather_data
 
     def _process_weather_info(self, data):
@@ -85,8 +102,10 @@ class WeatherData:
 
     def _to_celsius(self, kelvin):
         return kelvin - self.KTOC
+
     def _to_fahrenheit(self, kelvin):
         return (kelvin - self.KTOC) * 1.8 + 32
+
     @staticmethod
     def _check_weather_data(data):
         if not ('dt' in data and 'weather' in data and 'main' in data):
@@ -137,7 +156,7 @@ class WeatherData:
 
 
 class SunCalculator:
-    """计算日出日落时间 (返回 naive 时间)"""
+    """计算日出日落时间 (返回 naive 本地时间)"""
 
     def __init__(self, lat, lon, tz=None):
         self.lat = lat
@@ -153,25 +172,21 @@ class SunCalculator:
         else:
             return dt_input
 
-    def sunrise(self, when=None):
-        naive_when = self._get_naive_datetime_in_timezone(when)
-        self.__preptime(naive_when)
-        self.__calc()
-        return self.__timefromdecimalday(self.sunrise_t, naive_when)
+    def sun_times(self, when=None):
+        """一次算出 (日出, 日落, 太阳正午)。
 
-    def sunset(self, when=None):
+        原先 sunrise() / sunset() 各自跑一遍 `__preptime` + `__calc`，而调用方在每
+        个预测点上两样各取一次——同一时刻的同一套三角函数被算了两遍。合成一次
+        调用后结果逐位相同，运算量减半。
+        """
         naive_when = self._get_naive_datetime_in_timezone(when)
-        self.__preptime(naive_when)
-        self.__calc()
-        return self.__timefromdecimalday(self.sunset_t, naive_when)
+        self._preptime(naive_when)
+        self._calc()
+        return (self._timefromdecimalday(self.sunrise_t, naive_when),
+                self._timefromdecimalday(self.sunset_t, naive_when),
+                self._timefromdecimalday(self.solarnoon_t, naive_when))
 
-    def solarnoon(self, when=None):
-        naive_when = self._get_naive_datetime_in_timezone(when)
-        self.__preptime(naive_when)
-        self.__calc()
-        return self.__timefromdecimalday(self.solarnoon_t, naive_when)
-
-    def __timefromdecimalday(self, day_fraction, base_naive_when):
+    def _timefromdecimalday(self, day_fraction, base_naive_when):
         hours = 24.0 * day_fraction
         h = int(hours)
         minutes = (hours - h) * 60
@@ -204,8 +219,7 @@ class SunCalculator:
         except ValueError as e:
              raise ValueError(f"Could not construct valid naive datetime. adjusted_date={adjusted_date}, h={h}, m={m}, s={s}. Original error: {e}") from e
 
-    def __preptime(self, naive_when):
-        from modules.common_timezone import get_timezone_offset
+    def _preptime(self, naive_when):
         self.timezone_offset_hours = get_timezone_offset(self.tz) or 0.0
 
         when_utc = naive_when - datetime.timedelta(hours=self.timezone_offset_hours)
@@ -214,7 +228,7 @@ class SunCalculator:
         t = when_utc.time()
         self.time = (t.hour + t.minute/60.0 + t.second/3600.0) / 24.0
 
-    def __calc(self):
+    def _calc(self):
         timezone = self.timezone_offset_hours
         longitude = self.lon
         latitude = self.lat

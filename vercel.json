@@ -1,32 +1,14 @@
 {
-  "version": 2,
-  "builds": [
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "python3 -B -m modules.register.explore_static --live || python -B -m modules.register.explore_static --live || echo 'explore_static: WARNING skipped, keeping the committed public/pages/explore.html'",
+  "rewrites": [
     {
-      "src": "app.py",
-      "use": "@vercel/python"
+      "source": "/",
+      "destination": "/pages/index.html"
     },
     {
-      "src": "public/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/favicon.ico",
-      "dest": "/public/favicon.ico"
-    },
-    {
-      "src": "/public/(.*)",
-      "dest": "/public/$1"
-    },
-    {
-      "src": "/",
-      "dest": "/public/pages/index.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/app.py"
+      "source": "/explore",
+      "destination": "/pages/explore.html"
     }
   ]
 }
-

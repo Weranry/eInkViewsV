@@ -1,31 +1,9 @@
 import sys
 sys.dont_write_bytecode = True
 
-from flask import Flask
-import os
-from modules.plugins.plugin_loader import register_plugins
-from modules.errors.errors import register_error_handlers
-from modules.register.random_view_route import bp_random
-from modules.register.template_routes import bp_templates
-from modules.evkey_auth import check_auth
+from modules.app_core import create_app
 
-project_root = os.path.dirname(os.path.abspath(__file__))
-public_dir = os.path.join(project_root, 'public')
-app = Flask(__name__, template_folder=public_dir)
-app.config['JSON_AS_ASCII'] = False
-app.json.ensure_ascii = False
-register_plugins(app)
-register_error_handlers(app)
-app.register_blueprint(bp_random)
-app.register_blueprint(bp_templates)
-app.before_request(check_auth)
-
-
-@app.after_request
-def set_charset(response):
-    if response.mimetype == 'application/json':
-        response.headers['Content-Type'] = 'application/json; charset=utf-8'
-    return response
-
-if __name__ == '__main__':
-    app.run()
+# 必须写成单个 Name 赋值：Vercel 的 @vercel/python 是用 AST 静态分析找顶层入口的，
+# 元组解包（app, _ = ...）的赋值目标是 ast.Tuple，它认不出来，会直接报
+# "Could not find a top-level app, application, or handler in app.py"。
+app = create_app(mode='vercel')[0]

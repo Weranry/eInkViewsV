@@ -1,54 +1,46 @@
-from .utils import prepare_canvas, finalize_image
+"""HXL（384×184）横屏天气图：左侧房子与时钟，右侧一整条温度曲线贯穿全宽。"""
+
 from ...lib.weather_landscape_fetcher import WeatherData
-from ...lib.weather_landscape_view import WeatherDrawer
+from .drawer import WeatherDrawer
+from .utils import create_weather_canvas, finalize_image
 
-def generate_image(lat: float = 0.0,
-                   lon: float = 0.0,
-                   key: str = '',
-                   units: int = 0,
-                   pressure_min: float = 980.0,
-                   pressure_max: float = 1030.0,
-                   rotate: int = 0,
-                   invert: bool = False,
-                   tz=None,
-                   cmode=None,
-                   **kwargs):
-    try:
-        lat = float(lat)
-    except Exception:
-        lat = 0.0
-    try:
-        lon = float(lon)
-    except Exception:
-        lon = 0.0
-    try:
-        units = int(units)
-    except Exception:
-        units = 0
-    try:
-        pressure_min = float(pressure_min)
-        pressure_max = float(pressure_max)
-    except Exception:
-        pressure_min = 980.0
-        pressure_max = 1030.0
+# 几何参数只属于本尺寸，改这里不会牵动 h2xl
+XSTART = 32
+XSTEP = 44
+XFLAT = 10
+YSTEP = 50
+DRAWOFFSET = 100
 
-    weather_data = WeatherData(key, lat, lon, units_mode=units,
-                               pressure_min=pressure_min, pressure_max=pressure_max, tz=tz)
-    weather_data.get_weather_data()
 
-    drawer = WeatherDrawer()
-    # 规范尺寸
-    drawer.IMAGE_WIDTH = 384
-    drawer.IMAGE_HEIGHT = 184
-    drawer.DRAWOFFSET = 100
-    drawer.XSTART = 32
-    drawer.XSTEP = 44
-    drawer.XFLAT = 10
-    drawer.YSTEP = 50
-    drawer.DEFAULT_DEGREE_PER_PIXEL = 0.5
-    drawer.FLOWER_LEFT_PX = 10
-    drawer.FLOWER_RIGHT_PX = 15
+def _as_float(value, default):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
 
-    img, _ = prepare_canvas('hxl', palette_type='bw', cmode=cmode)
-    img_drawn = drawer.draw_weather(weather_data)
-    return finalize_image(img_drawn, rotate=rotate, invert=invert)
+
+def _as_int(value, default):
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return default
+
+
+async def generate_image(key='', lat=0.0, lon=0.0, units=0, pressure_min=980.0,
+                         pressure_max=1030.0, rotate=0, invert=False, tz=None,
+                         cmode=None, **kwargs):
+    weather = WeatherData(
+        key or '',
+        _as_float(lat, 0.0),
+        _as_float(lon, 0.0),
+        units_mode=_as_int(units, 0),
+        pressure_min=_as_float(pressure_min, 980.0),
+        pressure_max=_as_float(pressure_max, 1030.0),
+        tz=tz,
+    )
+    await weather.get_weather_data()
+
+    img, _ = create_weather_canvas('hxl', cmode=cmode)
+    WeatherDrawer(img, xstart=XSTART, xstep=XSTEP, xflat=XFLAT, ystep=YSTEP,
+                  drawoffset=DRAWOFFSET).draw(weather)
+    return finalize_image(img, rotate=rotate, invert=invert)
