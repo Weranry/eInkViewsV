@@ -1,3 +1,5 @@
+import os
+
 import importlib
 
 canvas_factory = importlib.import_module("modules.generate_views.canvas_factory")
@@ -9,6 +11,7 @@ from .utils import load_font, draw_safe_text, draw_rows, text_size
 
 
 def generate_image(rotate=0, invert=False, tz=None, cmode=None, **kwargs):
+    img, draw = create_canvas('hxl', palette_type='bwr', cmode=cmode)
     data = build_demo_data(
         a=kwargs.get('a'),
         b=kwargs.get('b'),
@@ -19,7 +22,6 @@ def generate_image(rotate=0, invert=False, tz=None, cmode=None, **kwargs):
         right=kwargs.get('right'),
         note=kwargs.get('note'),
     )
-    img, draw = create_canvas('hxl', palette_type='bwr', cmode=cmode)
 
     title_font = load_font(32)
     body_font = load_font(16)

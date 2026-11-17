@@ -1,9 +1,9 @@
 from ...lib.date_calculator import DateCalculator
-from modules.generate_views.font_loader import get_root_font_path
 
-# 本插件不带字体资源，统一使用框架内置字体（assets/fonts/font.ttf）
-FONT_PATH = get_root_font_path('font.ttf')
-
+FONT_PATHS = {
+    'default': 'assets/fonts/font.ttf',
+    # 可扩展更多字体类型
+}
 
 def get_calendar_data(tz=None):
     dc = DateCalculator(tz)

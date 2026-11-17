@@ -1,35 +1,36 @@
-# Weather Landscape 插件
+# Weather Landscape 插件说明文档
 
-基于 OpenWeatherMap 的横屏风景天气图：左侧房子与时钟，右侧一条温度曲线贯穿全宽，
-曲线上分布云、雨、雪、风向树与正午/午夜的花，壁炉烟雾的倾角随当地气压变化。
+此插件基于 OpenWeatherMap API 提供精美的动态风景天气视图，支持将实时的气压、温度、云量、雨雪等信息转化为 e-ink 画布点阵图像。
 
-## 请求方式
+## API 接口信息
 
-```text
-http://127.0.0.1:5000/weather_landscape/view/weather_landscape?size=hxl&lat=36.7066&lon=119.1268&key=<API Key>
-```
+### 1. 天气渲染视图 (View)
+该接口返回 24位 RGB 图像，经过 base-line JPEG 处理，专为 e-ink 屏幕驱动优化。
 
-| 参数 | 默认值 | 说明 |
-| :--- | :--- | :--- |
-| `size` | **必填** | `hxl`（384×184）或 `h2xl`（400×300），两者是独立布局 |
-| `key` | 空 | OpenWeatherMap API Key；为空时请求上游会失败 |
-| `lat` / `lon` | `0.0` | 纬度 / 经度 |
-| `units` | `0` | `0` 摄氏度，`1` 华氏度 |
-| `pressure_min` / `pressure_max` | `980.0` / `1030.0` | 气压区间，用来把当前气压映射成烟雾倾角 |
-| `tz` | 框架默认时区 | 时区偏移（小时）或 `ZoneInfo` 名称；图上一切时刻都按它换算 |
-| `rotate` / `invert` / `format` | 框架默认 | 旋转、反色、输出格式，由框架统一处理后处理 |
+**URL:** `/<plugin_name>/view/weather_landscape`
+
+**支持参数:**
+| 参数名 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `size` | string | **必填** | 画布尺寸。支持: `hl`(250x122), `hxl`(384x184), `hp` |
+| `lat` | float | `0.0` | 纬度坐标 |
+| `lon` | float | `0.0` | 经度坐标 |
+| `key` | string | `''` | OpenWeatherMap API Key (必填) |
+| `units` | int | `0` | 温度单位: `0`-摄氏度, `1`-华氏度 |
+| `rotate` | string | `0` | 旋转方向: `0`, `c`(顺时针), `cc`(逆时针), `h`(180度) |
+| `invert` | string | `f` | 颜色反转: `t`(开启), `f`(关闭) |
+| `cmode` | string | `None` | 自定义调色板处理模式 |
+
+**使用示例:**
+`http://127.0.0.1:5000/weather_landscape/view/weather_landscape?size=hl&lat=36.7066&lon=119.1268&key=your_api_key`
+
+## 功能特性
+- **动态气压烟雾**: 壁炉烟雾倾角随当地气压实时调整。
+- **动态降水系统**: 根据实时降雨量/降雪量在画面中渲染对应的雨线或雪花标识。
+- **云量显示**: 自动根据天空云量百分比显示对应档位的云朵图像。
+- **精细渲染**: 采用贝塞尔曲线平滑处理温度趋势，集成专用 Sprites 库。
 
 ## 目录结构
-
-- `lib/weather_landscape_fetcher.py`：取数。并发请求实况与预报两个端点，并把结果规整成
-  按时间升序的天气序列；`SunCalculator` 负责日出/日落/太阳正午，时间一律是该插件时区下的本地时间。
-- `view/weather_landscape/drawer.py`：绘制引擎，`hxl` 与 `h2xl` 共用。几何参数由视图传入，
-  所以两套布局互不影响。
-- `view/weather_landscape/hxl.py`、`h2xl.py`：两种尺寸各自的坐标与信息带。
-- `assets/sprite/`：点阵素材。素材索引是 0=黑 1=白 2=红 3=透明，框架画布是 0=白 1=黑 2=红，
-  引擎载入时会重映射并生成掩膜，贴图走 `Image.paste()`。
-
-## 渲染要点
-
-- 云端素材首次使用后进程内缓存，热重载时随模块一起重建。
-- 曲线、降水、风向都是先算好一维的分段数组再落笔，没有整屏的逐像素循环。
+- `lib/`: 包含 `weather_landscape_fetcher.py` (数据抓取) 和 `weather_landscape_view.py` (绘制逻辑)。
+- `assets/sprite/`: 存储天气图标点阵资源。
+- `view/weather_landscape/`: 存放各尺寸的具体布局配置。

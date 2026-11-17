@@ -1,14 +1,13 @@
 from modules.generate_views.canvas_factory import create_canvas, finalize_image_common
 from modules.generate_views.font_loader import get_font as get_font_global
-from .utils import FONT_PATH, get_calendar_data
-
+from .utils import FONT_PATHS, get_calendar_data
 
 def generate_image(rotate=0, invert=False, tz=None, cmode=None, **kwargs):
     img, draw = create_canvas('v2xl', palette_type='bwr', cmode=cmode)
-    title_font = get_font_global(26, font_path=FONT_PATH)
-    content_font = get_font_global(20, font_path=FONT_PATH)
-    large_font = get_font_global(100, font_path=FONT_PATH)
-    small_font = get_font_global(16, font_path=FONT_PATH)
+    title_font = get_font_global(26, font_path=FONT_PATHS['default'])
+    content_font = get_font_global(20, font_path=FONT_PATHS['default'])
+    large_font = get_font_global(100, font_path=FONT_PATHS['default'])
+    small_font = get_font_global(16, font_path=FONT_PATHS['default'])
 
     solar, lunar, ganzhi, season, festival = get_calendar_data(tz)
     # 顶部公历日期和星期
@@ -55,5 +54,8 @@ def generate_image(rotate=0, invert=False, tz=None, cmode=None, **kwargs):
 
     # 边框
     draw.rectangle([0, 0, img.width - 1, img.height - 1], outline=1, width=1)
+
+    # 尺寸标识
+    draw.text((img.width-16, img.height-24), "v2xl:300x400", font=small_font, fill=1, anchor="ra")
 
     return finalize_image_common(img, rotate=rotate, invert=invert)

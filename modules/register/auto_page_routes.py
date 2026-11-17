@@ -1,25 +1,15 @@
 import os
-from fastapi.responses import FileResponse
+from flask import send_from_directory
 
-
-def register_page_routes(router, plugin_name, page_dir):
+def register_page_routes(bp, plugin_name, page_dir):
     if not os.path.exists(page_dir):
         return
     for fname in os.listdir(page_dir):
-        if not fname.endswith('.html'):
-            continue
-        page_name = fname[:-5]
-        file_path = os.path.join(page_dir, fname)
-
-        async def make_page_endpoint(_file_path=file_path):
-            return FileResponse(_file_path)
-
-        endpoint_name = f'page_{plugin_name}_{page_name}'
-        make_page_endpoint.__name__ = endpoint_name
-
-        router.add_api_route(
-            f'/{plugin_name}/page/{page_name}',
-            endpoint=make_page_endpoint,
-            methods=['GET'],
-            name=endpoint_name,
-        )
+        if fname.endswith('.html'):
+            page_name = fname[:-5]
+            def make_page_func(page_name=page_name, page_dir=page_dir, filename=fname):
+                def page_func():
+                    return send_from_directory(page_dir, filename)
+                page_func.__name__ = f'page_{plugin_name}_{page_name}'
+                return page_func
+            bp.add_url_rule(f'/{plugin_name}/page/{page_name}', view_func=make_page_func())

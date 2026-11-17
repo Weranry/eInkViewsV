@@ -1,13 +1,11 @@
-"""HXL / H2XL 共用的画布辅助。
+from modules.generate_views.canvas_factory import (
+    create_canvas,
+    finalize_image_common,
+)
 
-画布固定 `bwr` 三色（0=白 1=黑 2=红），图上一切内容都由 `drawer.py` 画。
-"""
-from modules.generate_views.canvas_factory import create_canvas, finalize_image_common
-
-
-def create_weather_canvas(size_key, cmode=None):
-    return create_canvas(size_key, palette_type='bwr', cmode=cmode)
-
+def prepare_canvas(kind, palette_type='bwr', cmode=None):
+    img, draw = create_canvas(kind, palette_type, cmode=cmode)
+    return img, draw
 
 def finalize_image(img, rotate=0, invert=False):
     return finalize_image_common(img, rotate=rotate, invert=invert)

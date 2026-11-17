@@ -1,17 +1,25 @@
 import os
-from modules.cache.cache import get_font as _cached_get_font
+from PIL import ImageFont
 
-
+# 获取项目根目录下的字体路径
 def get_root_font_path(filename):
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
     return os.path.join(project_root, 'assets', 'fonts', filename)
 
-
+# 获取插件目录下的字体路径
+# base_file: 调用者的 __file__，从调用者所在目录向上两级到达插件根目录
+# 例如 hxl.py 位于 plugins/weather/view/temp_gauge/，向上两级 = plugins/weather/
 def get_plugin_font_path(filename, base_file):
     plugin_root = os.path.abspath(os.path.join(os.path.dirname(base_file), '../..'))
     return os.path.join(plugin_root, 'assets', 'fonts', filename)
 
+def _load_font(size, font_path):
+    abs_path = os.path.abspath(font_path)
+    try:
+        return ImageFont.truetype(abs_path, size)
+    except Exception as e:
+        raise RuntimeError(f"字体加载失败: {abs_path} ({e})")
 
+# 在视图模块中设定字体，大小
 def get_font(size, font_path):
-    # 是否走缓存由 modules.cache.cache 自己决定（Vercel Serverless 模式下已停用）
-    return _cached_get_font(font_path, size)
+    return _load_font(size, font_path)

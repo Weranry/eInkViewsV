@@ -1,110 +1,57 @@
-# Schedule
+# 课程表插件 (Schedule Plugin)
 
-将本地课程表 JSON 渲染到墨水屏，按「周次 + 星期」自动算出当天要上的课，节次数量与上课时间由 JSON 自定义。
+将课程表数据渲染至墨水屏。经过 UI 深度重构，提供更符合 e-ink 屏幕特性的高清显示。
 
 ## 功能特性
+- **UI 深度优化**：
+  - 严格遵守 16 像素栅格对齐，消除锯齿和灰色虚边。
+  - 强制 16 像素全周安全边距，确保文字永不超出屏幕边缘。
+  - 使用明确的网格布局（标签列 / 内容列 / 信息列），支持竖向分栏线以增强可读性。
+  - 每天固定展示 5 节课 (M1, M2, A1, A2, EV)，无课时保留空白行，不显示占位文本。
+- **智能文本渲染**：
+  - 课程名称自动带上《书名号》。
+  - 内置 **自动换行引擎**，长课名会按列宽自动换行并在行高范围内完整显示，避免水平溢出。
+  - 详细信息（教师/教室）自动右对齐，区分层级。
+- **多尺寸支持**：全面适配横向、纵向主流墨水屏尺寸。
 
-- **节次与时间自由配置**：当天有几节课、每节课几点到几点，全部由 JSON 里的 `timeSlots`
-  决定；不写这一项时按旧的 5 节（M1 / M2 / A1 / A2 / EV）兼容。
-- **时间轴版式**：只列出当天真正有课的节次，一条课一行——左侧黑色竖条做锚点，课名在上、
-  教室与教师在下，右侧上下两行显示开始 / 结束时间；空节次留白，不排一排空行。
-- **纯黑白**：不使用红色或其他彩色，层级靠字号、留白和竖条建立，适合任何双色 / 三色屏。
-- **字号按内容选**：课名在 32 / 16 两档间自动选择——行高与列宽都够用 32，否则退回 16，
-  窄屏还能折成两行；课多行矮时自动压缩成单行版式。
-- **溢出兜底**：课名与教室/教师都先按各自预算截断并补 `..`，同一行两段文字不会互相压字。
-- **无课提示**：整天没课时显示「今天没有课」。
-- **同节多课合并**：同一节次落多门课（如分班实验）时合并显示为 `课程A / 课程B`，不再静默覆盖。
+## 目录布局
+- `assets/course/`: 存放课程表 JSON 文件。默认加载 `course_schedule.json`。
+- `lib/fetcher.py`: 核心数据解析逻辑。
+- `view/schedule_view/utils.py`: 布局与渲染核心工具类。
+- `view/schedule_view/`: 渲染视图（hxl, h2xl, vxl, v2xl）。
 
-## 课程表 JSON 格式
+## API 使用
 
-```json
-{
-  "semesterStartDate": "2026-08-08",
-  "timeSlots": [
-    { "label": "M1", "start": "08:00", "end": "08:45" },
-    { "label": "M2", "start": "08:55", "end": "09:40" }
-  ],
-  "courses": [
-    {
-      "courseName": "高等数学",
-      "teacher": "张老师",
-      "classroom": [
-        { "week": [1, 2, 3], "dayOfWeek": 1, "lesson": 1, "room": "教1-203" }
-      ]
-    }
-  ]
-}
-```
+### 1. 视图接口 (View)
+`GET /schedule/view/schedule_view?size=<size_key>&json_name=<json_file_name>`
 
-| 字段 | 说明 |
-| :--- | :--- |
-| `timeSlots` | 节次表。数组长度即当天节次数，`lesson` 取 1 到该长度；每项 `label` 为节次名（可省略，自动用「第N节」），`start` / `end` 为 `HH:MM`，可只填其一或都不填 |
-| `semesterStartDate` | 学期开始日期，用来算当前第几周 |
-| `courses[].classroom[].lesson` | 第几节，对应 `timeSlots` 的下标 + 1 |
-| `courses[].classroom[].week` | 上课周次列表 |
+**支持的尺寸 (size)：**
+- `hxl`: 横向 384x184 (4.2寸)
+- `h2xl`: 横向 400x300 (4.2寸高清/7.5寸)
+- `vxl`: 纵向 184x384 (4.2寸)
+- `v2xl`: 纵向 300x400 (4.2寸高清/7.5寸)
 
-不配置 `start` / `end` 时，屏幕右侧改为显示节次名，方便只想要「第几节」的场景。
+**参数：**
+- `json_name`: 可选，JSON 文件名（不含后缀）。默认值 `course_schedule`。
+- `rotate`: 旋转角度 (0, c, cc, h)。
+- `invert`: 是否反色 (t, f)。
+- `tz`: 时区，默认 `Asia/Shanghai`。
 
-## 数据来源
+**测试 URL 示例：**
+- `http://127.0.0.1:5000/schedule/view/schedule_view?size=hxl`
+- `http://127.0.0.1:5000/schedule/view/schedule_view?size=h2xl`
+- `http://127.0.0.1:5000/schedule/view/schedule_view?size=vxl`
+- `http://127.0.0.1:5000/schedule/view/schedule_view?size=v2xl`
 
-完全没有网络请求，数据来自插件自带的本地文件 `assets/course/<json_name>.json`。
-换成自己的课程表只需往该目录里放一个同结构的 JSON，再用 `json_name` 参数指定文件名。
-节次的数量与时间也可以在可视化编辑器里改：`/schedule/page/converter`。
+### 2. 页面接口 (Page)
+`GET /schedule/page/converter`
 
-## 支持的尺寸
+访问内置编辑器，生成符合格式的 JSON 文件。
 
-| size | 分辨率 | 方向 |
-| :--- | :--- | :--- |
-| `hxl` | 384×184 | 横屏 |
-| `h2xl` | 400×300 | 横屏 |
-| `vxl` | 184×384 | 竖屏 |
-| `v2xl` | 300×400 | 竖屏 |
+## 注意事项 (Hardware Constraints)
+- 为保护 e-ink 屏幕，所有渲染采用 Indexed 模式，仅支持 **黑、白、红** 三色。请勿输入包含渐变或半透明的内容。
+- 所有数据拉取前建议先在 `converter.html` 预览 JSON 格式。
 
-调色板固定为 `bwr`（黑 / 白 / 红）。
+## 开发者
+GitHub Copilot (Gemini 3 Flash Preview)
 
-## 配置参数
-
-| 参数名 | 类型 | 必填 | 默认值 | 说明 |
-| :--- | :--- | :--- | :--- | :--- |
-| `json_name` | string | 否 | `course_schedule` | `assets/course/` 下的课程表文件名（不含 `.json`） |
-| `tz` | string | 否 | 框架默认 | 计算周次与星期用的时区，如 `8` 或 `Asia/Shanghai` |
-
-## 快速预览链接
-
-在运行主程序后，可直接点击查看效果：
-
-**横屏：**
-[http://127.0.0.1:5000/schedule/view/schedule_view?size=hxl](http://127.0.0.1:5000/schedule/view/schedule_view?size=hxl)
-[http://127.0.0.1:5000/schedule/view/schedule_view?size=h2xl](http://127.0.0.1:5000/schedule/view/schedule_view?size=h2xl)
-
-**竖屏：**
-[http://127.0.0.1:5000/schedule/view/schedule_view?size=vxl](http://127.0.0.1:5000/schedule/view/schedule_view?size=vxl)
-[http://127.0.0.1:5000/schedule/view/schedule_view?size=v2xl](http://127.0.0.1:5000/schedule/view/schedule_view?size=v2xl)
-
-**课程表编辑器（生成符合格式的 JSON）：**
-[http://127.0.0.1:5000/schedule/page/converter](http://127.0.0.1:5000/schedule/page/converter)
-
-## 目录结构
-
-```text
-schedule/
-├── __init__.py
-├── README.md
-├── plugin.json
-├── plugin_config.py
-├── routes.py
-├── assets/
-│   └── course/
-│       └── course_schedule.json
-├── lib/
-│   └── fetcher.py            # 课程表 JSON 读取与当天课表计算
-├── page/
-│   └── converter.html        # 课程表编辑器页面
-└── view/
-    └── schedule_view/
-        ├── hxl.py
-        ├── h2xl.py
-        ├── vxl.py
-        ├── v2xl.py
-        └── utils.py          # 网格渲染引擎（含自动换行）
-```

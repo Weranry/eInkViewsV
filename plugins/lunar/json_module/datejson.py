@@ -1,6 +1,5 @@
 from ..lib.date_calculator import DateCalculator
 
-
 def to_json(**kwargs):
     tz = kwargs.get('tz')
     dc = DateCalculator(tz)

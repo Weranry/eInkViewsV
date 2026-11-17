@@ -1,7 +1,7 @@
 from modules.generate_views.canvas_factory import create_canvas, finalize_image_common
 from modules.generate_views.font_loader import get_font as get_font_global
-from .utils import FONT_PATH, get_huangliA_data
-
+from .utils import FONT_PATHS, get_huangliA_data
+from PIL import ImageDraw
 
 def wrap_text(text, font, max_width, max_lines=2):
     lines = []
@@ -23,11 +23,10 @@ def wrap_text(text, font, max_width, max_lines=2):
             lines.append(current_line)
     return lines
 
-
 def generate_image(rotate=0, invert=False, tz=None, cmode=None, **kwargs):
     img, draw = create_canvas('h2xl', palette_type='bwr', cmode=cmode)
-    font_large = get_font_global(32, font_path=FONT_PATH)
-    font_small = get_font_global(16, font_path=FONT_PATH)
+    font_large = get_font_global(32, font_path=FONT_PATHS['default'])
+    font_small = get_font_global(16, font_path=FONT_PATHS['default'])
 
     # 获取数据
     lunar_date, ganzhi_date, solar_date, yiji = get_huangliA_data(tz=tz)

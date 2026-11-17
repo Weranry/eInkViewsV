@@ -1,13 +1,14 @@
-from fastapi import APIRouter
 import os
+from flask import Blueprint
 from modules.register.auto_view_routes import register_view_routes
 from modules.register.auto_page_routes import register_page_routes
 
-PLUGIN_NAME = "schedule"
-PLUGIN_DESCRIPTION = "课程表插件"
+bp = Blueprint('schedule', __name__)
+PLUGIN_NAME = 'schedule'
+PLUGIN_DESCRIPTION = '课程表插件'
 
-router = APIRouter()
-plugin_dir = os.path.dirname(os.path.abspath(__file__))
+VIEW_DIR = os.path.join(os.path.dirname(__file__), 'view')
+PAGE_DIR = os.path.join(os.path.dirname(__file__), 'page')
 
-register_view_routes(router, PLUGIN_NAME, os.path.join(plugin_dir, "view"))
-register_page_routes(router, PLUGIN_NAME, os.path.join(plugin_dir, "page"))
+register_view_routes(bp, PLUGIN_NAME, VIEW_DIR)
+register_page_routes(bp, PLUGIN_NAME, PAGE_DIR)

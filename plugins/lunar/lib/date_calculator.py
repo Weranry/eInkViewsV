@@ -1,13 +1,14 @@
+from datetime import datetime
 from lunar_python import Solar, Lunar
-from modules.utils.timezone import now_in_timezone
-
+from modules.common_timezone import now_in_timezone, get_timezone_offset
 
 class DateCalculator:
     def __init__(self, tz=None):
-        self._now = now_in_timezone(tz)
+        self.timezone_offset = get_timezone_offset(tz)
+        self._now = now_in_timezone(self.timezone_offset)
         self._solar = Solar.fromDate(self._now)
         self._lunar = Lunar.fromDate(self._now)
-
+    
     def get_solar_date(self):
         solar_year = str(self._solar.getYear())
         solar_month = str(self._solar.getMonth()).zfill(2)
@@ -68,3 +69,4 @@ class DateCalculator:
             "solar_festival": " ".join(solar_festivals + solar_other_festivals),
             "lunar_festival": " ".join(lunar_festivals + lunar_other_festivals)
         }
+

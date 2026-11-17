@@ -1,14 +1,13 @@
 from modules.generate_views.canvas_factory import create_canvas, finalize_image_common
 from modules.generate_views.font_loader import get_font as get_font_global
-from .utils import FONT_PATH, get_calendar_data
-
+from .utils import FONT_PATHS, get_calendar_data
 
 def generate_image(rotate=0, invert=False, tz=None, cmode=None, **kwargs):
     img, draw = create_canvas('h2xl', palette_type='bwr', cmode=cmode)
     # 字体全部为16或其整数倍
-    title_font = get_font_global(32, font_path=FONT_PATH)      # 标题用32
-    content_font = get_font_global(16, font_path=FONT_PATH)    # 内容用16
-    large_font = get_font_global(128, font_path=FONT_PATH)     # 放大日用128
+    title_font = get_font_global(32, font_path=FONT_PATHS['default'])      # 标题用32
+    content_font = get_font_global(16, font_path=FONT_PATHS['default'])    # 内容用16
+    large_font = get_font_global(128, font_path=FONT_PATHS['default'])     # 放大日用128
 
     solar, lunar, ganzhi, season, festival = get_calendar_data(tz)
     # 绘制公历日期和星期

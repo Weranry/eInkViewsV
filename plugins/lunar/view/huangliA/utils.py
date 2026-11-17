@@ -1,9 +1,9 @@
-from ...lib.today_huangli_A import todayhuangliA
-from modules.generate_views.font_loader import get_root_font_path
+FONT_PATHS = {
+    'default': 'assets/fonts/font.ttf',
+    # 可扩展更多字体类型
+}
 
-# 本插件不带字体资源，统一使用框架内置字体（assets/fonts/font.ttf）
-FONT_PATH = get_root_font_path('font.ttf')
-
+from plugins.lunar.lib.today_huangli_A import todayhuangliA
 
 def get_huangliA_data(tz=None):
     today = todayhuangliA(tz=tz)

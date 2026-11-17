@@ -1,12 +1,12 @@
+from datetime import datetime
 from lunar_python import Lunar
-from modules.utils.timezone import now_in_timezone
-
+from modules.common_timezone import now_in_timezone, get_timezone_offset
 
 class todayhuangli:
     def __init__(self, tz=None):
-        self.current_time = now_in_timezone(tz)
+        self.timezone_offset = get_timezone_offset(tz)
+        self.current_time = now_in_timezone(self.timezone_offset)
         self.lunar = Lunar.fromDate(self.current_time)
-
     def get_jishen(self) -> dict:
         return {
             "喜神": self.lunar.getDayPositionXiDesc(),
@@ -14,6 +14,7 @@ class todayhuangli:
             "财神": self.lunar.getDayPositionCaiDesc(),
             "阳贵神": self.lunar.getDayPositionYangGuiDesc(),
             "阴贵神": self.lunar.getDayPositionYinGuiDesc()
+
         }
 
     def get_taishen(self) -> str:
@@ -32,6 +33,6 @@ class todayhuangli:
         animal = self.lunar.getAnimal()
         luck = self.lunar.getXiuLuck()
         return f"{xiu}{animal}{luck}"
-
+    
     def get_chongsha(self) -> str:
         return self.lunar.getDayChongDesc()

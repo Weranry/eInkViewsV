@@ -1,15 +1,8 @@
-# cmode 支持的映射模式。参数校验从这里取，不要再抄一份字面量：
-# 抄一份的话，这里加了新模式、那边还会照旧拒绝，表现为「支持了但一传就 400」
-CMODE_MODES = ('2bw', 'r2y', 'y2r', 'yr2r', 'yr2y')
-# URL 上显式传 cmode 时允许的取值：上述模式 + 'None'（显式表示不映射）
-CMODE_ARG_VALUES = ('None',) + CMODE_MODES
-
-
 def map_palette(palette, mode):
     """
     调色板映射函数
     palette: [r,g,b, r,g,b, ...]
-    mode: None, 'None', 或 CMODE_MODES 中的任意一项
+    mode: None, '2bw', 'r2y', 'y2r', 'yr2r', 'yr2y'
     """
     if not mode or mode == 'None':
         return palette

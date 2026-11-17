@@ -1,56 +1,46 @@
-"""HXL（384×184）横屏多日预报：等宽分栏 + 栏间细线。
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 
-字号只用 16 的倍数。每列自上而下：星期 → 日期 → 图标 → 天气名 → 高低温 → 降水概率。
-列数自适应：≤5 列时高低温同行（16），≥6 列窄栏改上下两行，避免压线重叠。
-"""
 import importlib
 
 canvas_factory = importlib.import_module("modules.generate_views.canvas_factory")
 create_canvas = canvas_factory.create_canvas
 finalize_image_common = canvas_factory.finalize_image_common
 
-from ...lib.fetcher import fetch_weather
-from ..common import (load_font, load_icon_font, draw_centered, draw_icon,
-                      divider, vdivider)
-from .utils import draw_header, draw_day_range_inline, draw_day_range_stacked
+from ...lib.weather_data import fetch_daily_forecast
+from .utils import (
+    load_font, load_icon_font, text_size,
+    draw_safe_text, draw_separator, draw_forecast_column,
+)
 
-MARGIN = 16
 
+def generate_image(rotate=0, invert=False, tz=None, cmode=None, **kwargs):
+    lat = kwargs.get("lat")
+    lon = kwargs.get("lon")
+    forecast = fetch_daily_forecast(lat, lon, tz, days=3)
 
-async def generate_image(city=None, lat=None, lon=None, days=3,
-                         rotate=0, invert=False, tz=None, cmode=None, **kwargs):
-    data = await fetch_weather(city=city, lat=lat, lon=lon, days=days, host=kwargs.get('host'))
-    img, draw = create_canvas('hxl', palette_type='bwr', cmode=cmode)
-    w, h = img.width, img.height
-    daily = data['daily']
-    n = max(1, len(daily))
+    img, draw = create_canvas("hxl", palette_type="bwr", cmode=cmode)
+    W = img.width
+    H = img.height
 
-    text_font = load_font(16)
-    stacked = n >= 6  # 窄列：高低温上下两行
-    # 图标不受 16 倍数限制：宽列取满栏高，窄列收一点避让栏线
-    icon_font = load_icon_font(28 if stacked else 36)
+    title_font = load_font(32)
+    day_font = load_font(16)
+    icon_font = load_icon_font(32)
+    temp_font = load_font(16)
 
-    draw_header(draw, data, n, MARGIN, w, text_font, text_font, y=8)
-    divider(draw, 30, MARGIN, w - MARGIN)
+    title_text = "预报"
+    title_tw, title_th = text_size(draw, title_text, title_font)
+    draw_safe_text(draw, (16, 8), title_text, fill=2, font=title_font, img_width=W, img_height=H)
 
-    x0, x1 = MARGIN, w - MARGIN
-    col_w = (x1 - x0) // n
-    for i, day in enumerate(daily):
-        cx = x0 + col_w * i + col_w // 2
-        draw_centered(draw, cx, 36, day['weekday'], text_font, fill=1, max_width=col_w - 8)
-        draw_centered(draw, cx, 56, str(day['date'])[5:], text_font, fill=1)
-        draw_icon(draw, cx, 88, day['icon'], icon_font, fill=1)
-        if stacked:
-            draw_centered(draw, cx, 106, day['condition'], text_font, fill=1, max_width=col_w - 4)
-            draw_day_range_stacked(draw, cx, 124, 142, day, text_font, text_font)
-            # 窄列省掉「雨」前缀，概率数字本身已表意
-            draw_centered(draw, cx, 162, f'{day["precip_prob"]}%', text_font, fill=1)
-        else:
-            draw_centered(draw, cx, 108, day['condition'], text_font, fill=1, max_width=col_w - 6)
-            draw_day_range_inline(draw, cx, 128, day, text_font, text_font)
-            draw_centered(draw, cx, 150, f'雨 {day["precip_prob"]}%', text_font, fill=1)
+    sep_y = 8 + title_th + 8
+    draw_separator(draw, sep_y, W)
 
-        if i:
-            vdivider(draw, x0 + col_w * i, 34, h - 14)
+    col_w = (W - 32) // 3
+    grid_y = sep_y + 8
+
+    for i, day in enumerate(forecast[:3]):
+        x = 16 + i * col_w
+        draw_forecast_column(draw, x, grid_y, col_w, day, day_font, icon_font, temp_font, W, H)
 
     return finalize_image_common(img, rotate=rotate, invert=invert)

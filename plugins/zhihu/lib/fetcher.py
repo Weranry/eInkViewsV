@@ -1,86 +1,64 @@
-"""知乎日报 RSS 取数与解析。
-
-数据源是 RSSHub 的知乎日报订阅（`<base>/zhihu/daily`，base 默认见
-`_DEFAULT_RSSHUB_BASE`），返回 RSS(2.0) 或 Atom 格式的 XML。用 BeautifulSoup 的
-html.parser 解析：它比 XML 解析器宽容，同时能捕获 <item> 与 <entry>，正好覆盖两种格式。
-
-原默认实例 rsshub.umi.im 已经无法解析（DNS 找不到主机），这里换成可用实例；
-公共实例的可用性会波动，因此 base 可由 rsshub_base 参数覆盖，建议指到自建实例。
-
-网络与解析失败按「拿不到数据」抛 ParamError（沿用原插件的责任划分），并且保留真实
-原因——不再像旧版那样用一个宽 try/except 把内部的 ParamError 二次包成一句泛化文案，
-那样会把「解析不到 link」这类排障时最想看到的信息盖掉。
-"""
-import re
-import warnings
-
-import httpx
+import requests
 from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
-
 from modules.errors.errors import ParamError
-
-# 原默认实例 rsshub.umi.im 已失效，换用可用实例；可用 rsshub_base 覆盖
-_DEFAULT_RSSHUB_BASE = 'https://rsshub.rssforever.com'
-_TIMEOUT_SECONDS = 10.0
-_USER_AGENT = 'eInkViews-zhihu-plugin'
+import warnings
 
 # 忽略 HTML 解析 XML 的警告
 warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
-
-def _extract_link(item, xml_data):
-    """提取条目链接。
-
-    html.parser 下 XML 的 `<link>url</link>` 可能被解析成自闭合的 `<link/>`，
-    url 落到 next_sibling；再取不到时才用正则兜底。
-    """
-    link_tag = item.find('link')
-    if link_tag:
-        link = link_tag.get_text(strip=True)
-        if not link:
-            sibling = link_tag.next_sibling
-            if sibling and isinstance(sibling, str):
-                link = sibling.strip()
-            elif link_tag.get('href'):
-                link = link_tag.get('href')
-        if link:
-            return link
-
-    match = re.search(r'<link>(.*?)</link>', xml_data, re.DOTALL | re.IGNORECASE)
-    return match.group(1).strip() if match else ''
-
-
-async def fetch_zhihu_daily(rsshub_base=None):
-    """取当日知乎日报最新一条的标题与原文链接；`rsshub_base` 可覆盖默认实例。"""
-    base = (rsshub_base or _DEFAULT_RSSHUB_BASE).rstrip('/')
-    url = f'{base}/zhihu/daily'
+def fetch_zhihu_daily():
+    url = 'https://rsshub.umi.im/zhihu/daily'
     try:
-        async with httpx.AsyncClient(
-            timeout=httpx.Timeout(_TIMEOUT_SECONDS),
-            headers={'User-Agent': _USER_AGENT},
-            follow_redirects=True,
-        ) as client:
-            resp = await client.get(url)
-    except httpx.HTTPError as exc:
-        # httpx 超时异常的 str() 可能是空串，带上类型名才看得出是超时还是连不上
-        raise ParamError(f"知乎日报获取失败: {type(exc).__name__}: {str(exc)}")
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        
+        # 强制设置编码，防止部分环境解析 RSS 时文字乱码
+        response.encoding = 'utf-8'
+        xml_data = response.text
 
-    if resp.status_code != 200:
-        raise ParamError(f"知乎日报获取失败: HTTP {resp.status_code}")
+        # 优先使用 html.parser 以保证通用性，同时捕获 item/entry
+        soup = BeautifulSoup(xml_data, 'html.parser')
+        
+        # 查找条目 (RSS 使用 item, Atom 使用 entry)
+        item = soup.find('item') or soup.find('entry')
+        
+        if not item:
+            raise ParamError("No zhihu daily items found in the response")
 
-    # 强制按 UTF-8 解码，防止部分环境解析 RSS 时文字乱码
-    xml_data = resp.content.decode('utf-8', errors='replace')
+        title = item.find('title').get_text(strip=True) if item.find('title') else "No Title"
+        
+        # 处理链接: 
+        # 在 html.parser 下，XML 的 <link>url</link> 可能被解析为 <link/> 且 url 变成 next_sibling
+        link_tag = item.find('link')
+        link = ""
+        if link_tag:
+            link = link_tag.get_text(strip=True)
+            if not link:
+                # 尝试获取 next_sibling (针对 html.parser 误判自闭合的情况)
+                sibling = link_tag.next_sibling
+                if sibling and isinstance(sibling, str):
+                    link = sibling.strip()
+                elif link_tag.get('href'):
+                    link = link_tag.get('href')
 
-    soup = BeautifulSoup(xml_data, 'html.parser')
-    item = soup.find('item') or soup.find('entry')
-    if not item:
-        raise ParamError("知乎日报响应里没有条目（item/entry）")
+        if not link:
+            # 最后的保底手段：正则表达式提取
+            import re
+            link_match = re.search(r'<link>(.*?)</link>', xml_data, re.DOTALL | re.IGNORECASE)
+            if link_match:
+                link = link_match.group(1).strip()
 
-    title_tag = item.find('title')
-    title = title_tag.get_text(strip=True) if title_tag else 'No Title'
+        if not link:
+            raise ParamError("Could not extract link from Zhihu daily item")
 
-    link = _extract_link(item, xml_data)
-    if not link:
-        raise ParamError("无法从知乎日报条目里解析出链接")
+        # 确保链接是完整的 URL
+        if not link.startswith('http'):
+            # 如果是相对路径 (可能性较小)，补全
+            pass
 
-    return {'title': title, 'link': link}
+        return {
+            "title": title,
+            "link": link
+        }
+    except Exception as e:
+        raise ParamError(f"Error fetching Zhihu daily: {str(e)}")

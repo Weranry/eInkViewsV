@@ -1,49 +1,96 @@
-"""forecast 视图专用排版辅助：标题、日期跨度、单列温度的组合绘制。"""
-from ..common import text_size, draw_at, draw_right, draw_centered
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
+
+import importlib
+
+font_loader = importlib.import_module("modules.generate_views.font_loader")
+get_root_font_path = font_loader.get_root_font_path
+get_font = font_loader.get_font
 
 
-def forecast_title(n):
-    if n == 2:
-        return '两日预报'
-    if n == 3:
-        return '三日预报'
-    return f'未来{n}日预报'
+def load_font(size):
+    try:
+        return get_font(size, get_root_font_path("font.ttf"))
+    except Exception:
+        from PIL import ImageFont
+        return ImageFont.load_default()
 
 
-def date_span(daily):
-    """'11-13 ~ 11-15'，取预报首尾日期"""
-    if not daily:
-        return ''
-    first, last = daily[0]['date'], daily[-1]['date']
-    if first == last:
-        return first[5:]
-    return f'{first[5:]} ~ {last[5:]}'
+def load_icon_font(size):
+    try:
+        return get_font(size, get_root_font_path("weather-icon.ttf"))
+    except Exception:
+        from PIL import ImageFont
+        return ImageFont.load_default()
 
 
-def draw_header(draw, data, n, margin, width, title_font, meta_font, y=8):
-    """页眉：左「N日预报」，右「城市 · 日期跨度」"""
-    draw_at(draw, (margin, y), forecast_title(n), title_font, fill=1)
-    title_h = text_size(draw, forecast_title(n), title_font)[1]
-    meta = f'{data["location"]["name"]} · {date_span(data["daily"])}'
-    meta_h = text_size(draw, meta, meta_font)[1]
-    draw_right(draw, width - margin, y + (title_h - meta_h), meta, meta_font, fill=1,
-               max_width=width - margin * 3)
+def text_size(draw, text, font):
+    bbox = draw.textbbox((0, 0), str(text), font=font)
+    return bbox[2] - bbox[0], bbox[3] - bbox[1]
 
 
-def draw_day_range_inline(draw, cx, y, day, hi_font, lo_font, gap=5):
-    """'12°/2°' 单行居中：高值红、低值黑，字号相同靠颜色分层"""
-    hi, lo = f"{int(round(day['tmax']))}°", f"{int(round(day['tmin']))}°"
-    hi_w = text_size(draw, hi, hi_font)[0]
-    sep_w = text_size(draw, '/', hi_font)[0]
-    lo_w = text_size(draw, lo, lo_font)[0]
-    total = hi_w + sep_w + lo_w + gap * 2
-    x = cx - total // 2
-    x += draw_at(draw, (x, y), hi, hi_font, fill=2)[0]
-    x += draw_at(draw, (x, y), '/', hi_font, fill=1)[0]
-    draw_at(draw, (x + gap, y), lo, lo_font, fill=1)
+def draw_safe_text(draw, xy, text, fill, font, img_width, img_height):
+    x, y = xy
+    text = str(text)
+    tw, th = text_size(draw, text, font)
+    if x + tw > img_width:
+        x = max(0, img_width - tw - 2)
+    if y + th > img_height:
+        y = max(0, img_height - th - 2)
+    if x < 0:
+        x = 0
+    if y < 0:
+        y = 0
+    draw.text((x, y), text, fill=fill, font=font)
+    return tw, th
 
 
-def draw_day_range_stacked(draw, cx, y_hi, y_lo, day, hi_font, lo_font):
-    """高低温上下两行居中：红高黑低，大尺寸屏用"""
-    draw_centered(draw, cx, y_hi, f"{int(round(day['tmax']))}°", hi_font, fill=2)
-    draw_centered(draw, cx, y_lo, f"{int(round(day['tmin']))}°", lo_font, fill=1)
+def draw_separator(draw, y, img_width):
+    draw.line([(16, y), (img_width - 16, y)], fill=1, width=1)
+
+
+WEEKDAY_NAMES = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+
+
+def date_to_weekday(date_str):
+    from datetime import datetime
+    try:
+        dt = datetime.strptime(date_str, "%Y-%m-%d")
+        return WEEKDAY_NAMES[dt.weekday()]
+    except Exception:
+        return date_str
+
+
+def draw_forecast_column(draw, x, y, col_w, day_data, day_font, icon_font, temp_font, W, H):
+    from ...lib.weather_icons import get_weather_icon
+
+    icon, desc = get_weather_icon(day_data["weather_code"])
+    day_label = date_to_weekday(day_data["date"])
+    t_max = day_data["temp_max"]
+    t_min = day_data["temp_min"]
+    precip = day_data["precip_prob"]
+
+    center_x = x + col_w // 2
+
+    day_tw, day_th = text_size(draw, day_label, day_font)
+    draw_safe_text(draw, (center_x - day_tw // 2, y), day_label, fill=1, font=day_font, img_width=W, img_height=H)
+
+    icon_y = y + day_th + 4
+    icon_tw, icon_th = text_size(draw, icon, icon_font)
+    draw_safe_text(draw, (center_x - icon_tw // 2, icon_y), icon, fill=1, font=icon_font, img_width=W, img_height=H)
+
+    temp_y = icon_y + icon_th + 4
+    t_max_str = f"{t_max:.0f}" if t_max is not None else "--"
+    t_min_str = f"{t_min:.0f}" if t_min is not None else "--"
+    temp_text = f"{t_max_str}/{t_min_str}"
+    temp_tw, temp_th = text_size(draw, temp_text, temp_font)
+    draw_safe_text(draw, (center_x - temp_tw // 2, temp_y), temp_text, fill=1, font=temp_font, img_width=W, img_height=H)
+
+    if precip is not None:
+        precip_y = temp_y + temp_th + 2
+        precip_text = f"{precip:.0f}%"
+        precip_tw, precip_th = text_size(draw, precip_text, temp_font)
+        draw_safe_text(draw, (center_x - precip_tw // 2, precip_y), precip_text, fill=2, font=temp_font, img_width=W, img_height=H)
+        return precip_y + precip_th
+    return temp_y + temp_th
